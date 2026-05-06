@@ -22,7 +22,7 @@ app.use(express.static("public"));
 
 
 // ===== DATABASE =====
-mongoose.connect("mongodb://127.0.0.1:27017/smarthome")
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log("MongoDB Error:", err));
 
