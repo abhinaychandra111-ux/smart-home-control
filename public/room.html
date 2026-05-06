@@ -44,7 +44,9 @@
         <div>
 
             <h1 class="logo">
+
                 ⚡ SmartHome
+
             </h1>
 
             <nav>
@@ -89,7 +91,7 @@
 
 
 
-    <!-- ================= MAIN CONTENT ================= -->
+    <!-- ================= MAIN ================= -->
 
     <main class="main-content">
 
@@ -108,7 +110,7 @@
 
                 <p>
 
-                    Manage all smart devices
+                    Manage smart devices in this room
 
                 </p>
 
@@ -246,6 +248,7 @@ if (!localStorage.getItem("token")) {
 }
 
 
+
 // ================= ROOM PARAM =================
 
 const params =
@@ -255,10 +258,12 @@ const selectedRoom =
     params.get("room");
 
 
-// ================= SET ROOM TITLE =================
+
+// ================= ROOM TITLE =================
 
 document.getElementById("roomTitle").innerText =
     selectedRoom;
+
 
 
 // ================= SOCKET =================
@@ -266,10 +271,13 @@ document.getElementById("roomTitle").innerText =
 const socket = io({
 
     auth: {
+
         token: localStorage.getItem("token")
+
     }
 
 });
+
 
 
 // ================= INVALID TOKEN =================
@@ -281,6 +289,7 @@ socket.on("connect_error", () => {
     window.location.href = "/login.html";
 
 });
+
 
 
 // ================= RECEIVE DEVICES =================
@@ -299,6 +308,7 @@ socket.on("updateDevices", (devices) => {
         );
 
 
+
     // ================= ANALYTICS =================
 
     let total = roomDevices.length;
@@ -314,7 +324,9 @@ socket.on("updateDevices", (devices) => {
 
             onCount++;
 
-        } else {
+        }
+
+        else {
 
             offCount++;
 
@@ -340,13 +352,47 @@ socket.on("updateDevices", (devices) => {
 
         let icon = "";
 
+        let controls = "";
+
+
+
+        // ================= ICONS =================
 
         if (device.type === "light") {
 
             icon =
             `<i class="fa-solid fa-lightbulb"></i>`;
 
+
+            controls = `
+
+                <div class="control-box">
+
+                    <label>
+
+                        Brightness
+
+                    </label>
+
+                    <input type="range"
+                           min="0"
+                           max="100"
+                           value="${device.brightness}"
+                           onchange="changeBrightness(
+                           '${device.name}',
+                           this.value)">
+
+                    <p>
+
+                        ${device.brightness}%
+
+                    </p>
+
+                </div>
+
+            `;
         }
+
 
 
         if (device.type === "fan") {
@@ -354,7 +400,55 @@ socket.on("updateDevices", (devices) => {
             icon =
             `<i class="fa-solid fa-fan"></i>`;
 
+
+            controls = `
+
+                <div class="control-box">
+
+                    <label>
+
+                        Fan Speed
+
+                    </label>
+
+                    <select onchange="changeSpeed(
+                            '${device.name}',
+                            this.value)">
+
+                        <option
+                        ${device.speed === "Low"
+                            ? "selected"
+                            : ""}>
+
+                            Low
+
+                        </option>
+
+                        <option
+                        ${device.speed === "Medium"
+                            ? "selected"
+                            : ""}>
+
+                            Medium
+
+                        </option>
+
+                        <option
+                        ${device.speed === "High"
+                            ? "selected"
+                            : ""}>
+
+                            High
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+            `;
         }
+
 
 
         if (device.type === "ac") {
@@ -362,7 +456,36 @@ socket.on("updateDevices", (devices) => {
             icon =
             `<i class="fa-solid fa-snowflake"></i>`;
 
+
+            controls = `
+
+                <div class="control-box">
+
+                    <label>
+
+                        Temperature
+
+                    </label>
+
+                    <input type="range"
+                           min="16"
+                           max="30"
+                           value="${device.temperature}"
+                           onchange="changeTemperature(
+                           '${device.name}',
+                           this.value)">
+
+                    <p>
+
+                        ${device.temperature}°C
+
+                    </p>
+
+                </div>
+
+            `;
         }
+
 
 
         if (device.type === "tv") {
@@ -370,13 +493,43 @@ socket.on("updateDevices", (devices) => {
             icon =
             `<i class="fa-solid fa-tv"></i>`;
 
+
+            controls = `
+
+                <div class="control-box">
+
+                    <label>
+
+                        Volume
+
+                    </label>
+
+                    <input type="range"
+                           min="0"
+                           max="100"
+                           value="${device.volume}"
+                           onchange="changeVolume(
+                           '${device.name}',
+                           this.value)">
+
+                    <p>
+
+                        ${device.volume}%
+
+                    </p>
+
+                </div>
+
+            `;
         }
+
 
 
         const checked =
             device.status === "ON"
             ? "checked"
             : "";
+
 
 
         container.innerHTML += `
@@ -406,9 +559,10 @@ socket.on("updateDevices", (devices) => {
                 </p>
 
 
-                <div class="room-bottom">
 
-                    <!-- TOGGLE -->
+                <!-- TOGGLE -->
+
+                <div class="room-bottom">
 
                     <label class="switch">
 
@@ -424,13 +578,19 @@ socket.on("updateDevices", (devices) => {
 
                 </div>
 
+
+
+                <!-- DEVICE CONTROLS -->
+
+                ${controls}
+
                 <br>
 
-                <!-- DELETE BUTTON -->
+                <!-- DELETE -->
 
                 <button onclick="deleteDevice('${device.name}')">
 
-                    Delete
+                    Delete Device
 
                 </button>
 
@@ -490,6 +650,70 @@ function toggleDevice(device) {
 function deleteDevice(device) {
 
     socket.emit("deleteDevice", device);
+
+}
+
+
+
+// ================= BRIGHTNESS =================
+
+function changeBrightness(deviceName, value) {
+
+    socket.emit("changeBrightness", {
+
+        deviceName,
+
+        value
+
+    });
+
+}
+
+
+
+// ================= FAN SPEED =================
+
+function changeSpeed(deviceName, value) {
+
+    socket.emit("changeSpeed", {
+
+        deviceName,
+
+        value
+
+    });
+
+}
+
+
+
+// ================= TEMPERATURE =================
+
+function changeTemperature(deviceName, value) {
+
+    socket.emit("changeTemperature", {
+
+        deviceName,
+
+        value
+
+    });
+
+}
+
+
+
+// ================= TV VOLUME =================
+
+function changeVolume(deviceName, value) {
+
+    socket.emit("changeVolume", {
+
+        deviceName,
+
+        value
+
+    });
 
 }
 

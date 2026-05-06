@@ -38,25 +38,35 @@
         <div>
 
             <h1 class="logo">
+
                 ⚡ SmartHome
+
             </h1>
 
             <nav>
 
                 <a class="active">
+
                     🏠 Dashboard
+
                 </a>
 
                 <a>
+
                     🛏 Rooms
+
                 </a>
 
                 <a>
+
                     📊 Analytics
+
                 </a>
 
                 <a>
+
                     ⚙ Settings
+
                 </a>
 
             </nav>
@@ -74,6 +84,7 @@
     </aside>
 
 
+
     <!-- ================= MAIN CONTENT ================= -->
 
     <main class="main-content">
@@ -86,11 +97,15 @@
             <div>
 
                 <h2>
+
                     Smart Home Dashboard
+
                 </h2>
 
                 <p>
+
                     Control your rooms and smart devices
+
                 </p>
 
             </div>
@@ -105,7 +120,8 @@
         </div>
 
 
-        <!-- ================= STATS CARDS ================= -->
+
+        <!-- ================= STATS ================= -->
 
         <section class="stats-grid">
 
@@ -114,7 +130,9 @@
                 <h3>Total Rooms</h3>
 
                 <h1 id="roomCount">
+
                     0
+
                 </h1>
 
             </div>
@@ -125,7 +143,9 @@
                 <h3>Devices ON</h3>
 
                 <h1 id="onCount">
+
                     0
+
                 </h1>
 
             </div>
@@ -136,12 +156,15 @@
                 <h3>Devices OFF</h3>
 
                 <h1 id="offCount">
+
                     0
+
                 </h1>
 
             </div>
 
         </section>
+
 
 
         <!-- ================= ADD ROOM ================= -->
@@ -161,6 +184,7 @@
         </div>
 
 
+
         <!-- ================= ROOM GRID ================= -->
 
         <div id="deviceContainer"
@@ -169,7 +193,8 @@
         </div>
 
 
-        <!-- ================= CHART SECTION ================= -->
+
+        <!-- ================= CHART ================= -->
 
         <div class="glass-card chart-box fade-in">
 
@@ -188,7 +213,7 @@
 <script src="/socket.io/socket.io.js"></script>
 
 
-<!-- ================= CHART.JS ================= -->
+<!-- ================= CHART JS ================= -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -204,15 +229,19 @@ if (!localStorage.getItem("token")) {
 }
 
 
-// ================= SOCKET CONNECTION =================
+
+// ================= SOCKET =================
 
 const socket = io({
 
     auth: {
+
         token: localStorage.getItem("token")
+
     }
 
 });
+
 
 
 // ================= INVALID TOKEN =================
@@ -226,6 +255,7 @@ socket.on("connect_error", () => {
 });
 
 
+
 // ================= GLOBAL STORAGE =================
 
 let allDevices = [];
@@ -233,6 +263,7 @@ let allDevices = [];
 let allRooms = [];
 
 let deviceChart;
+
 
 
 // ================= RECEIVE DEVICES =================
@@ -246,6 +277,7 @@ socket.on("updateDevices", (devices) => {
 });
 
 
+
 // ================= RECEIVE ROOMS =================
 
 socket.on("updateRooms", (rooms) => {
@@ -257,6 +289,7 @@ socket.on("updateRooms", (rooms) => {
 });
 
 
+
 // ================= RENDER ROOMS =================
 
 function renderRooms() {
@@ -266,6 +299,7 @@ function renderRooms() {
 
     container.innerHTML = "";
 
+
     const groupedRooms = {};
 
     let totalOn = 0;
@@ -273,7 +307,8 @@ function renderRooms() {
     let totalOff = 0;
 
 
-    // GROUP DEVICES BY ROOM
+
+    // GROUP DEVICES
 
     allDevices.forEach(device => {
 
@@ -290,13 +325,16 @@ function renderRooms() {
 
             totalOn++;
 
-        } else {
+        }
+
+        else {
 
             totalOff++;
 
         }
 
     });
+
 
 
     // UPDATE STATS
@@ -309,6 +347,7 @@ function renderRooms() {
 
     document.getElementById("offCount").innerText =
         totalOff;
+
 
 
     // CREATE ROOM CARDS
@@ -332,38 +371,51 @@ function renderRooms() {
         });
 
 
+
         container.innerHTML += `
 
-            <div class="room-card glass-card fade-in"
-                 onclick="openRoom('${room}')">
+            <div class="room-card glass-card fade-in">
 
-                <div class="room-icon">
+                <div onclick="openRoom('${room}')">
 
-                    🏠
+                    <div class="room-icon">
+
+                        🏠
+
+                    </div>
+
+                    <h2>
+
+                        ${room}
+
+                    </h2>
+
+                    <p>
+
+                        ${roomDevices.length} Devices
+
+                    </p>
+
+                    <div class="room-bottom">
+
+                        <span class="on-badge">
+
+                            ${roomOnCount} ON
+
+                        </span>
+
+                    </div>
 
                 </div>
 
-                <h2>
+                <br>
 
-                    ${room}
+                <button class="delete-room-btn"
+                        onclick="deleteRoom('${room}')">
 
-                </h2>
+                    Delete Room
 
-                <p>
-
-                    ${roomDevices.length} Devices
-
-                </p>
-
-                <div class="room-bottom">
-
-                    <span class="on-badge">
-
-                        ${roomOnCount} ON
-
-                    </span>
-
-                </div>
+                </button>
 
             </div>
 
@@ -372,11 +424,13 @@ function renderRooms() {
     });
 
 
+
     // UPDATE CHART
 
     updateChart(totalOn, totalOff);
 
 }
+
 
 
 // ================= ADD ROOM =================
@@ -395,6 +449,22 @@ function addRoom() {
 }
 
 
+
+// ================= DELETE ROOM =================
+
+function deleteRoom(room) {
+
+    const confirmDelete =
+        confirm(`Delete ${room} room?`);
+
+    if (!confirmDelete) return;
+
+    socket.emit("deleteRoom", room);
+
+}
+
+
+
 // ================= OPEN ROOM =================
 
 function openRoom(room) {
@@ -403,6 +473,7 @@ function openRoom(room) {
         `/room.html?room=${room}`;
 
 }
+
 
 
 // ================= LOGOUT =================
@@ -416,12 +487,14 @@ function logout() {
 }
 
 
-// ================= CREATE / UPDATE CHART =================
+
+// ================= CHART =================
 
 function updateChart(onCount, offCount) {
 
     const ctx =
         document.getElementById("deviceChart");
+
 
     if (deviceChart) {
 
@@ -437,20 +510,29 @@ function updateChart(onCount, offCount) {
         data: {
 
             labels: [
+
                 "Devices ON",
+
                 "Devices OFF"
+
             ],
 
             datasets: [{
 
                 data: [
+
                     onCount,
+
                     offCount
+
                 ],
 
                 backgroundColor: [
+
                     "#00ff88",
+
                     "#ff5d5d"
+
                 ],
 
                 borderWidth: 0
@@ -472,7 +554,9 @@ function updateChart(onCount, offCount) {
                         color: "white",
 
                         font: {
+
                             size: 14
+
                         }
 
                     }
