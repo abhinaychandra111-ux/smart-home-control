@@ -1,61 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Smart Home Control</title>
+
+    <meta charset="UTF-8">
 
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+    <title>Smart Home Dashboard</title>
+
+    <link rel="stylesheet"
+          href="style.css">
+
+    <!-- GOOGLE FONT -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
 </head>
 
 <body>
 
-<!-- ================= HEADER ================= -->
+<div class="layout">
 
-<div class="header">
+    <!-- ================= SIDEBAR ================= -->
 
-    <div class="header-left"></div>
+    <aside class="sidebar">
 
-    <div class="header-center">
-        Smart Home Control Panel
-    </div>
+        <div>
 
-    <div class="header-right">
-        <button onclick="logout()">
+            <h1 class="logo">
+                ⚡ SmartHome
+            </h1>
+
+            <nav>
+
+                <a class="active">
+                    🏠 Dashboard
+                </a>
+
+                <a>
+                    🛏 Rooms
+                </a>
+
+                <a>
+                    📊 Analytics
+                </a>
+
+                <a>
+                    ⚙ Settings
+                </a>
+
+            </nav>
+
+        </div>
+
+
+        <button class="logout-btn"
+                onclick="logout()">
+
             Logout
+
         </button>
-    </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN CONTENT ================= -->
+
+    <main class="main-content">
+
+
+        <!-- ================= TOPBAR ================= -->
+
+        <div class="topbar">
+
+            <div>
+
+                <h2>
+                    Smart Home Dashboard
+                </h2>
+
+                <p>
+                    Control your rooms and smart devices
+                </p>
+
+            </div>
+
+
+            <div class="top-right">
+
+                🔔
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= STATS CARDS ================= -->
+
+        <section class="stats-grid">
+
+            <div class="stats-card glow-blue fade-in">
+
+                <h3>Total Rooms</h3>
+
+                <h1 id="roomCount">
+                    0
+                </h1>
+
+            </div>
+
+
+            <div class="stats-card glow-green fade-in">
+
+                <h3>Devices ON</h3>
+
+                <h1 id="onCount">
+                    0
+                </h1>
+
+            </div>
+
+
+            <div class="stats-card glow-red fade-in">
+
+                <h3>Devices OFF</h3>
+
+                <h1 id="offCount">
+                    0
+                </h1>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ADD ROOM ================= -->
+
+        <div class="add-room-box glass-card fade-in">
+
+            <input type="text"
+                   id="newRoom"
+                   placeholder="Add New Room">
+
+            <button onclick="addRoom()">
+
+                Add Room
+
+            </button>
+
+        </div>
+
+
+        <!-- ================= ROOM GRID ================= -->
+
+        <div id="deviceContainer"
+             class="room-grid">
+
+        </div>
+
+
+        <!-- ================= CHART SECTION ================= -->
+
+        <div class="glass-card chart-box fade-in">
+
+            <canvas id="deviceChart"></canvas>
+
+        </div>
+
+    </main>
 
 </div>
 
-
-<!-- ================= ADD ROOM PANEL ================= -->
-
-<div class="panel">
-
-    <input type="text"
-           id="newRoom"
-           placeholder="New Room Name">
-
-    <button onclick="addRoom()">
-        Add Room
-    </button>
-
-</div>
-
-
-<!-- ================= ROOM CONTAINER ================= -->
-
-<div id="deviceContainer"
-     class="container">
-</div>
 
 
 <!-- ================= SOCKET.IO ================= -->
 
 <script src="/socket.io/socket.io.js"></script>
+
+
+<!-- ================= CHART.JS ================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 
 <script>
@@ -90,11 +226,13 @@ socket.on("connect_error", () => {
 });
 
 
-// ================= STORE DATA =================
+// ================= GLOBAL STORAGE =================
 
 let allDevices = [];
 
 let allRooms = [];
+
+let deviceChart;
 
 
 // ================= RECEIVE DEVICES =================
@@ -128,21 +266,49 @@ function renderRooms() {
 
     container.innerHTML = "";
 
-    const rooms = {};
+    const groupedRooms = {};
+
+    let totalOn = 0;
+
+    let totalOff = 0;
+
 
     // GROUP DEVICES BY ROOM
 
     allDevices.forEach(device => {
 
-        if (!rooms[device.room]) {
+        if (!groupedRooms[device.room]) {
 
-            rooms[device.room] = [];
+            groupedRooms[device.room] = [];
 
         }
 
-        rooms[device.room].push(device);
+        groupedRooms[device.room].push(device);
+
+
+        if (device.status === "ON") {
+
+            totalOn++;
+
+        } else {
+
+            totalOff++;
+
+        }
 
     });
+
+
+    // UPDATE STATS
+
+    document.getElementById("roomCount").innerText =
+        allRooms.length;
+
+    document.getElementById("onCount").innerText =
+        totalOn;
+
+    document.getElementById("offCount").innerText =
+        totalOff;
 
 
     // CREATE ROOM CARDS
@@ -150,22 +316,17 @@ function renderRooms() {
     allRooms.forEach(room => {
 
         const roomDevices =
-            rooms[room] || [];
+            groupedRooms[room] || [];
 
-        let onCount = 0;
-
-        let offCount = 0;
+        let roomOnCount = 0;
 
 
         roomDevices.forEach(device => {
 
             if (device.status === "ON") {
 
-                onCount++;
+                roomOnCount++;
 
-            } else {
-
-                offCount++;
             }
 
         });
@@ -173,32 +334,47 @@ function renderRooms() {
 
         container.innerHTML += `
 
-            <div class="card"
-                 onclick="openRoom('${room}')"
-                 style="cursor:pointer;">
+            <div class="room-card glass-card fade-in"
+                 onclick="openRoom('${room}')">
 
-                <h2>🏠</h2>
+                <div class="room-icon">
 
-                <h3>${room}</h3>
+                    🏠
+
+                </div>
+
+                <h2>
+
+                    ${room}
+
+                </h2>
 
                 <p>
-                    Total Devices:
-                    ${roomDevices.length}
+
+                    ${roomDevices.length} Devices
+
                 </p>
 
-                <p class="status-on">
-                    ON: ${onCount}
-                </p>
+                <div class="room-bottom">
 
-                <p class="status-off">
-                    OFF: ${offCount}
-                </p>
+                    <span class="on-badge">
+
+                        ${roomOnCount} ON
+
+                    </span>
+
+                </div>
 
             </div>
 
         `;
 
     });
+
+
+    // UPDATE CHART
+
+    updateChart(totalOn, totalOff);
 
 }
 
@@ -219,7 +395,7 @@ function addRoom() {
 }
 
 
-// ================= OPEN ROOM PAGE =================
+// ================= OPEN ROOM =================
 
 function openRoom(room) {
 
@@ -236,6 +412,78 @@ function logout() {
     localStorage.removeItem("token");
 
     window.location.href = "/login.html";
+
+}
+
+
+// ================= CREATE / UPDATE CHART =================
+
+function updateChart(onCount, offCount) {
+
+    const ctx =
+        document.getElementById("deviceChart");
+
+    if (deviceChart) {
+
+        deviceChart.destroy();
+
+    }
+
+
+    deviceChart = new Chart(ctx, {
+
+        type: "doughnut",
+
+        data: {
+
+            labels: [
+                "Devices ON",
+                "Devices OFF"
+            ],
+
+            datasets: [{
+
+                data: [
+                    onCount,
+                    offCount
+                ],
+
+                backgroundColor: [
+                    "#00ff88",
+                    "#ff5d5d"
+                ],
+
+                borderWidth: 0
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            plugins: {
+
+                legend: {
+
+                    labels: {
+
+                        color: "white",
+
+                        font: {
+                            size: 14
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
 
 }
 
