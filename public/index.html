@@ -4,15 +4,18 @@
 <head>
     <title>Smart Home Control</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- HEADER -->
+<!-- ================= HEADER ================= -->
+
 <div class="header">
+
     <div class="header-left"></div>
 
     <div class="header-center">
@@ -20,81 +23,104 @@
     </div>
 
     <div class="header-right">
-        <button onclick="logout()">Logout</button>
+        <button onclick="logout()">
+            Logout
+        </button>
     </div>
+
 </div>
 
-<!-- PANEL -->
+
+<!-- ================= ADD ROOM PANEL ================= -->
+
 <div class="panel">
 
-    <!-- ADD DEVICE -->
-    <input type="text" id="newDevice" placeholder="Device name">
+    <input type="text"
+           id="newRoom"
+           placeholder="New Room Name">
 
-    <select id="deviceType">
-        <option value="light">Light</option>
-        <option value="fan">Fan</option>
-        <option value="ac">AC</option>
-        <option value="tv">TV</option>
-    </select>
-
-    <select id="deviceRoom">
-        <option value="Living Room">Living Room</option>
-        <option value="Bedroom">Bedroom</option>
-    </select>
-
-    <button onclick="addDevice()">Add Device</button>
-
-    <br><br>
-
-    <!-- ADD ROOM -->
-    <input type="text" id="newRoom" placeholder="New Room Name">
-    <button onclick="addRoom()">Add Room</button>
+    <button onclick="addRoom()">
+        Add Room
+    </button>
 
 </div>
 
-<!-- ROOM DASHBOARD -->
-<div id="deviceContainer" class="container"></div>
+
+<!-- ================= ROOM CONTAINER ================= -->
+
+<div id="deviceContainer"
+     class="container">
+</div>
+
+
+<!-- ================= SOCKET.IO ================= -->
 
 <script src="/socket.io/socket.io.js"></script>
 
+
 <script>
 
-// 🔒 AUTH CHECK
+// ================= AUTH CHECK =================
+
 if (!localStorage.getItem("token")) {
+
     window.location.href = "/login.html";
 }
 
-// 🔌 SOCKET CONNECT
+
+// ================= SOCKET CONNECTION =================
+
 const socket = io({
+
     auth: {
         token: localStorage.getItem("token")
     }
+
 });
 
-// ❌ INVALID TOKEN
+
+// ================= INVALID TOKEN =================
+
 socket.on("connect_error", () => {
+
     localStorage.removeItem("token");
+
     window.location.href = "/login.html";
+
 });
 
-// STORE DEVICES
+
+// ================= STORE DATA =================
+
 let allDevices = [];
+
 let allRooms = [];
 
-// RECEIVE DEVICES
+
+// ================= RECEIVE DEVICES =================
+
 socket.on("updateDevices", (devices) => {
+
     allDevices = devices;
+
     renderRooms();
+
 });
+
+
+// ================= RECEIVE ROOMS =================
 
 socket.on("updateRooms", (rooms) => {
 
     allRooms = rooms.map(r => r.name);
 
     renderRooms();
+
 });
 
-// 🔥 MAIN RENDER FUNCTION
+
+// ================= RENDER ROOMS =================
+
 function renderRooms() {
 
     const container =
@@ -105,34 +131,48 @@ function renderRooms() {
     const rooms = {};
 
     // GROUP DEVICES BY ROOM
+
     allDevices.forEach(device => {
 
         if (!rooms[device.room]) {
+
             rooms[device.room] = [];
+
         }
 
         rooms[device.room].push(device);
+
     });
 
-    // CREATE ROOM CARDS ONLY
+
+    // CREATE ROOM CARDS
+
     allRooms.forEach(room => {
 
-        const roomDevices = rooms[room] || [];
+        const roomDevices =
+            rooms[room] || [];
 
         let onCount = 0;
+
         let offCount = 0;
+
 
         roomDevices.forEach(device => {
 
             if (device.status === "ON") {
+
                 onCount++;
+
             } else {
+
                 offCount++;
             }
 
         });
 
+
         container.innerHTML += `
+
             <div class="card"
                  onclick="openRoom('${room}')"
                  style="cursor:pointer;">
@@ -141,70 +181,62 @@ function renderRooms() {
 
                 <h3>${room}</h3>
 
-                <p>Total Devices: ${roomDevices.length}</p>
+                <p>
+                    Total Devices:
+                    ${roomDevices.length}
+                </p>
 
-                <p style="color:#00ff88;">
+                <p class="status-on">
                     ON: ${onCount}
                 </p>
 
-                <p style="color:#ff4d4d;">
+                <p class="status-off">
                     OFF: ${offCount}
                 </p>
 
             </div>
+
         `;
+
     });
-}
 
-// ➕ ADD DEVICE
-function addDevice() {
-
-    const name = document.getElementById("newDevice").value;
-    const type = document.getElementById("deviceType").value;
-    const room = document.getElementById("deviceRoom").value;
-
-    if (!name) return;
-
-    socket.emit("addDevice", { name, type, room });
-
-    document.getElementById("newDevice").value = "";
 }
 
 
-// ➕ ADD ROOM (FRONTEND ONLY)
+// ================= ADD ROOM =================
+
 function addRoom() {
 
-    const room = document.getElementById("newRoom").value;
+    const room =
+        document.getElementById("newRoom").value;
 
     if (!room) return;
 
     socket.emit("addRoom", room);
 
     document.getElementById("newRoom").value = "";
-}
 
-// 🔁 TOGGLE DEVICE
-function toggleDevice(device) {
-    socket.emit("toggleDevice", device);
 }
 
 
-// ❌ DELETE DEVICE
-function deleteDevice(device) {
-    socket.emit("deleteDevice", device);
-}
+// ================= OPEN ROOM PAGE =================
 
-
-// 🚪 LOGOUT
-function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "/login.html";
-}
-
-
-// 🔗 OPEN ROOM PAGE
 function openRoom(room) {
-    window.location.href = `/room.html?room=${room}`;
+
+    window.location.href =
+        `/room.html?room=${room}`;
+
+}
+
+
+// ================= LOGOUT =================
+
+function logout() {
+
+    localStorage.removeItem("token");
+
+    window.location.href = "/login.html";
+
 }
 
 </script>

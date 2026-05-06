@@ -2,113 +2,277 @@
 <html>
 
 <head>
+
     <title>Room Devices</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
+<!-- ================= HEADER ================= -->
+
 <div class="header">
-    <div class="header-left"></div>
 
-    <div class="header-center" id="roomTitle">
+    <div class="header-left">
+
+        <button onclick="goBack()">
+            Back
+        </button>
+
+    </div>
+
+    <div class="header-center"
+         id="roomTitle">
+
         Room
+
     </div>
 
-    <div class="header-right">
-        <button onclick="goBack()">Back</button>
-    </div>
+    <div class="header-right"></div>
+
 </div>
 
-<div id="deviceContainer" class="container"></div>
+
+<!-- ================= ADD DEVICE PANEL ================= -->
+
+<div class="panel">
+
+    <input type="text"
+           id="newDevice"
+           placeholder="Device Name">
+
+    <select id="deviceType">
+
+        <option value="light">Light</option>
+
+        <option value="fan">Fan</option>
+
+        <option value="ac">AC</option>
+
+        <option value="tv">TV</option>
+
+    </select>
+
+    <button onclick="addDevice()">
+
+        Add Device
+
+    </button>
+
+</div>
+
+
+<!-- ================= DEVICE CONTAINER ================= -->
+
+<div id="deviceContainer"
+     class="container">
+
+</div>
+
+
+<!-- ================= SOCKET.IO ================= -->
 
 <script src="/socket.io/socket.io.js"></script>
 
+
 <script>
 
-// 🔒 Auth
+// ================= AUTH CHECK =================
+
 if (!localStorage.getItem("token")) {
+
     window.location.href = "/login.html";
 }
 
-// 🔌 Socket
+
+// ================= GET ROOM NAME =================
+
+const params =
+    new URLSearchParams(window.location.search);
+
+const selectedRoom =
+    params.get("room");
+
+
+// ================= SET ROOM TITLE =================
+
+document.getElementById("roomTitle").innerText =
+    selectedRoom;
+
+
+// ================= SOCKET CONNECTION =================
+
 const socket = io({
+
     auth: {
         token: localStorage.getItem("token")
     }
+
 });
 
-// ❌ invalid token
+
+// ================= INVALID TOKEN =================
+
 socket.on("connect_error", () => {
+
     localStorage.removeItem("token");
+
     window.location.href = "/login.html";
+
 });
 
-// 📌 Get room from URL
-const params = new URLSearchParams(window.location.search);
-const selectedRoom = params.get("room");
 
-// Set title
-document.getElementById("roomTitle").innerText = selectedRoom;
+// ================= RECEIVE DEVICES =================
 
-
-// 🔄 Load devices
 socket.on("updateDevices", (devices) => {
 
-    const container = document.getElementById("deviceContainer");
+    const container =
+        document.getElementById("deviceContainer");
+
     container.innerHTML = "";
 
-    // Filter by room
-    const roomDevices = devices.filter(d => d.room === selectedRoom);
+
+    // FILTER ROOM DEVICES
+
+    const roomDevices =
+        devices.filter(device =>
+            device.room === selectedRoom
+        );
+
+
+    // CREATE DEVICE CARDS
 
     roomDevices.forEach(device => {
 
         let icon = "🔌";
 
-        if (device.type === "light") icon = "💡";
-        if (device.type === "fan") icon = "🌀";
-        if (device.type === "ac") icon = "❄";
-        if (device.type === "tv") icon = "📺";
+        if (device.type === "light")
+            icon = "💡";
 
-        const statusClass =
-            device.status === "ON" ? "status-on" : "status-off";
+        if (device.type === "fan")
+            icon = "🌀";
+
+        if (device.type === "ac")
+            icon = "❄️";
+
+        if (device.type === "tv")
+            icon = "📺";
+
+
+        const checked =
+            device.status === "ON"
+            ? "checked"
+            : "";
+
 
         container.innerHTML += `
+
             <div class="card">
+
                 <h2>${icon}</h2>
+
                 <h3>${device.name}</h3>
-                <p class="${statusClass}">${device.status}</p>
+
+                <p class="${
+                    device.status === "ON"
+                    ? "status-on"
+                    : "status-off"
+                }">
+
+                    ${device.status}
+
+                </p>
+
+
+                <!-- TOGGLE SWITCH -->
 
                 <label class="switch">
-    <input type="checkbox"
-        ${device.status === "ON" ? "checked" : ""}
-        onchange="toggleDevice('${device.name}')">
-    <span class="slider"></span>
-</label>
+
+                    <input type="checkbox"
+                           ${checked}
+                           onchange="toggleDevice('${device.name}')">
+
+                    <span class="slider"></span>
+
+                </label>
+
+                <br><br>
+
+
+                <!-- DELETE BUTTON -->
 
                 <button onclick="deleteDevice('${device.name}')">
+
                     Delete
+
                 </button>
+
             </div>
+
         `;
+
     });
+
 });
 
 
-// 🔁 Actions
-function toggleDevice(name) {
-    socket.emit("toggleDevice", name);
+// ================= ADD DEVICE =================
+
+function addDevice() {
+
+    const name =
+        document.getElementById("newDevice").value;
+
+    const type =
+        document.getElementById("deviceType").value;
+
+
+    if (!name) return;
+
+
+    socket.emit("addDevice", {
+
+        name,
+        type,
+        room: selectedRoom
+
+    });
+
+
+    document.getElementById("newDevice").value = "";
+
 }
 
-function deleteDevice(name) {
-    socket.emit("deleteDevice", name);
+
+// ================= TOGGLE DEVICE =================
+
+function toggleDevice(device) {
+
+    socket.emit("toggleDevice", device);
+
 }
 
-// 🔙 Back
+
+// ================= DELETE DEVICE =================
+
+function deleteDevice(device) {
+
+    socket.emit("deleteDevice", device);
+
+}
+
+
+// ================= GO BACK =================
+
 function goBack() {
+
     window.location.href = "/";
+
 }
 
 </script>

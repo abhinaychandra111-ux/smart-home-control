@@ -2,146 +2,141 @@
 <html>
 
 <head>
-  <title>Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #1e1e2f;
-      color: rgb(255, 252, 252);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+    <title>Login</title>
 
-    .box {
-      background: #2c2c3e;
-      padding: 30px;
-      border-radius: 10px;
-      width: 380px;
-      text-align: center;
-    }
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    input {
-      width: 100%;
-      padding: 8px;
-      margin: 8px 0;
-      border-radius: 5px;
-      border: none;
-    }
-
-    button {
-      padding: 8px 15px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .password-container {
-      position: relative;
-      width: 91.5%;
-    }
-
-    .password-container input {
-      padding-right: 40px;
-    }
-
-    .eye {
-      position: absolute;
-      right: -1px;
-      top: 50%;
-      color: #000;
-      transform: translateY(-50%);
-      cursor: pointer;
-    }
-
-    a {
-      color: lightblue;
-    }
-  </style>
+    <link rel="stylesheet" href="style.css">
 
 </head>
 
-<body>
+<body class="auth-body">
 
-<div class="box">
-  <h2>Login</h2>
+<div class="auth-box">
 
-  <input type="text" id="username" placeholder="Username">
+    <h2>Login</h2>
 
-  <!-- Password with eye -->
-  <div class="password-container">
-    <input type="password" id="password" placeholder="Password">
-    <span class="eye" onclick="togglePassword()">👁</span>
-  </div>
+    <!-- USERNAME -->
 
-  <button onclick="login()">Login</button>
+    <input type="text"
+           id="username"
+           placeholder="Username">
 
-  <p>
-    Don't have account?
-    <a href="/register.html">Register</a>
-  </p>
 
-  <p id="message"></p>
+    <!-- PASSWORD -->
+
+    <div class="password-box">
+
+        <input type="password"
+               id="password"
+               placeholder="Password">
+
+        <span onclick="togglePassword()"
+              class="eye-btn">
+
+              👁
+
+        </span>
+
+    </div>
+
+
+    <!-- LOGIN BUTTON -->
+
+    <button onclick="login()">
+
+        Login
+
+    </button>
+
+
+    <!-- MESSAGE -->
+
+    <p id="message"></p>
+
+
+    <!-- REGISTER LINK -->
+
+    <p>
+
+        Don't have account?
+
+        <a href="/register.html">
+
+            Register
+
+        </a>
+
+    </p>
+
 </div>
+
 
 <script>
 
-function togglePassword() {
-  const field = document.getElementById("password");
+// ================= PASSWORD SHOW/HIDE =================
 
-  field.type =
-    field.type === "password" ? "text" : "password";
+function togglePassword() {
+
+    const password =
+        document.getElementById("password");
+
+    password.type =
+        password.type === "password"
+        ? "text"
+        : "password";
 }
 
 
+// ================= LOGIN FUNCTION =================
+
 async function login() {
 
-  const username =
-    document.getElementById("username").value;
+    const username =
+        document.getElementById("username").value;
 
-  const password =
-    document.getElementById("password").value;
+    const password =
+        document.getElementById("password").value;
 
-  const message =
-    document.getElementById("message");
 
-  // validation
-  if (!username || !password) {
-    message.innerText = "Enter username and password";
-    return;
-  }
+    const res = await fetch("/login", {
 
-  const res = await fetch("/login", {
+        method: "POST",
 
-    method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
 
-    headers: {
-      "Content-Type": "application/json"
-    },
+        body: JSON.stringify({
+            username,
+            password
+        })
 
-    body: JSON.stringify({
-      username,
-      password
-    })
-  });
+    });
 
-  const data = await res.json();
 
-  if (data.token) {
+    const data = await res.json();
 
-    localStorage.setItem("token", data.token);
 
-    window.location.href = "/";
+    // SUCCESS LOGIN
 
-  } else {
+    if (data.token) {
 
-    message.innerText = data.message;
-  }
+        localStorage.setItem("token", data.token);
+
+        window.location.href = "/";
+
+    }
+
+    // FAILED LOGIN
+
+    else {
+
+        document.getElementById("message").innerText =
+            data.message;
+    }
 }
 
 </script>

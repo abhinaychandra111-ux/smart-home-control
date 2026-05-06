@@ -1,10 +1,12 @@
 /* ================= BODY ================= */
 
 body {
+
     font-family: 'Segoe UI', sans-serif;
 
     background:
-        linear-gradient(rgba(10,10,20,0.65), rgba(10,10,20,0.65)),
+        linear-gradient(rgba(10,10,20,0.7),
+        rgba(10,10,20,0.7)),
         url("images/background.jpg");
 
     background-size: cover;
@@ -18,11 +20,74 @@ body {
 }
 
 
+/* ================= AUTH PAGES ================= */
+
+.auth-body {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    height: 100vh;
+}
+
+
+/* ================= AUTH BOX ================= */
+
+.auth-box {
+
+    width: 340px;
+
+    background: rgba(255,255,255,0.08);
+
+    backdrop-filter: blur(15px);
+
+    padding: 30px;
+
+    border-radius: 20px;
+
+    text-align: center;
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+
+/* ================= PASSWORD BOX ================= */
+
+.password-box {
+
+    position: relative;
+}
+
+
+/* ================= EYE BUTTON ================= */
+
+.eye-btn {
+
+    position: absolute;
+
+    right: 15px;
+
+    top: 13px;
+
+    cursor: pointer;
+
+    user-select: none;
+}
+
+
 /* ================= HEADER ================= */
 
 .header {
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
     padding: 15px 25px;
@@ -34,21 +99,39 @@ body {
     border-radius: 15px;
 
     margin-bottom: 30px;
+
+    border: 1px solid rgba(255,255,255,0.15);
 }
 
+
+/* ================= HEADER LEFT ================= */
+
 .header-left {
+
     width: 120px;
 }
 
+
+/* ================= HEADER CENTER ================= */
+
 .header-center {
+
     font-size: 28px;
+
     font-weight: bold;
+
     text-align: center;
+
     flex-grow: 1;
 }
 
+
+/* ================= HEADER RIGHT ================= */
+
 .header-right {
+
     width: 120px;
+
     text-align: right;
 }
 
@@ -56,6 +139,7 @@ body {
 /* ================= PANEL ================= */
 
 .panel {
+
     background: rgba(255,255,255,0.08);
 
     backdrop-filter: blur(15px);
@@ -67,43 +151,80 @@ body {
     border: 1px solid rgba(255,255,255,0.2);
 
     display: inline-block;
+
+    margin-bottom: 30px;
 }
 
 
-/* ================= INPUT & SELECT ================= */
+/* ================= INPUTS ================= */
 
-input, select {
-    padding: 8px;
+input,
+select {
+
+    padding: 10px;
+
     margin: 5px;
 
-    border-radius: 5px;
+    border-radius: 8px;
+
     border: none;
 
     outline: none;
+
+    width: 220px;
+
+    box-sizing: border-box;
 }
 
 
-/* ================= CONTAINER ================= */
+/* ================= BUTTONS ================= */
+
+button {
+
+    background: rgba(255,255,255,0.1);
+
+    backdrop-filter: blur(10px);
+
+    border: 1px solid rgba(255,255,255,0.2);
+
+    color: white;
+
+    padding: 10px 15px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+
+button:hover {
+
+    background: rgba(255,255,255,0.25);
+}
+
+
+/* ================= GRID CONTAINER ================= */
 
 .container {
+
     display: grid;
 
-    grid-template-columns: repeat(auto-fit, 220px);
+    grid-template-columns:
+        repeat(auto-fit, minmax(220px, 1fr));
 
     gap: 20px;
 
-    justify-content: center;
-
-    margin-top: 30px;
+    margin-top: 20px;
 }
 
 
 /* ================= CARD ================= */
 
 .card {
-    width: 220px;
 
-    padding: 15px;
+    padding: 20px;
 
     text-align: center;
 
@@ -120,116 +241,148 @@ input, select {
     transition: 0.3s;
 }
 
+
 .card:hover {
-    transform: translateY(-5px) scale(1.03);
+
+    transform: translateY(-5px);
 
     background: rgba(255,255,255,0.15);
-}
-
-
-/* ================= BUTTON ================= */
-
-button {
-    background: rgba(255,255,255,0.1);
-
-    backdrop-filter: blur(10px);
-
-    border: 1px solid rgba(255,255,255,0.2);
-
-    color: white;
-
-    padding: 8px 15px;
-
-    border-radius: 8px;
-
-    cursor: pointer;
-
-    transition: 0.3s;
-}
-
-button:hover {
-    background: rgba(255,255,255,0.25);
 }
 
 
 /* ================= STATUS ================= */
 
 .status-on {
+
     color: #00ff88;
+
     font-weight: bold;
 }
+
 
 .status-off {
+
     color: #ff4d4d;
+
     font-weight: bold;
 }
 
-/* TOGGLE SWITCH */
+
+/* ================= TOGGLE SWITCH ================= */
+
 .switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 24px;
+
+    position: relative;
+
+    display: inline-block;
+
+    width: 50px;
+
+    height: 24px;
 }
+
 
 .switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+
+    opacity: 0;
+
+    width: 0;
+
+    height: 0;
 }
+
+
+/* ================= SLIDER ================= */
 
 .slider {
-  position: absolute;
-  cursor: pointer;
 
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+    position: absolute;
 
-  background-color: #ccc;
+    cursor: pointer;
 
-  transition: 0.4s;
+    top: 0;
 
-  border-radius: 34px;
+    left: 0;
+
+    right: 0;
+
+    bottom: 0;
+
+    background-color: #777;
+
+    transition: 0.4s;
+
+    border-radius: 34px;
 }
+
+
+/* ================= SLIDER CIRCLE ================= */
 
 .slider:before {
-  position: absolute;
-  content: "";
 
-  height: 18px;
-  width: 18px;
+    position: absolute;
 
-  left: 3px;
-  bottom: 3px;
+    content: "";
 
-  background-color: white;
+    height: 18px;
 
-  transition: 0.4s;
+    width: 18px;
 
-  border-radius: 50%;
+    left: 3px;
+
+    bottom: 3px;
+
+    background-color: white;
+
+    transition: 0.4s;
+
+    border-radius: 50%;
 }
+
+
+/* ================= SWITCH ON ================= */
 
 input:checked + .slider {
-  background-color: #00ff88;
+
+    background-color: #00ff88;
 }
 
+
 input:checked + .slider:before {
-  transform: translateX(26px);
+
+    transform: translateX(26px);
 }
+
+
+/* ================= LINKS ================= */
+
+a {
+
+    color: #87cefa;
+
+    text-decoration: none;
+}
+
+
+a:hover {
+
+    text-decoration: underline;
+}
+
 
 /* ================= MOBILE RESPONSIVE ================= */
 
 @media (max-width: 768px) {
 
     body {
+
         padding: 10px;
     }
 
-    /* HEADER */
     .header {
+
         flex-direction: column;
+
         gap: 15px;
 
         text-align: center;
@@ -237,38 +390,44 @@ input:checked + .slider:before {
 
     .header-left,
     .header-right {
+
         width: auto;
     }
 
     .header-center {
+
         font-size: 22px;
     }
 
-    /* PANEL */
     .panel {
+
         width: 100%;
+
         box-sizing: border-box;
 
         text-align: center;
     }
 
-    /* INPUTS */
     input,
     select,
     button {
+
         width: 100%;
+
         margin: 8px 0;
 
         box-sizing: border-box;
     }
 
-    /* CARDS */
     .container {
+
         grid-template-columns: 1fr;
     }
 
     .card {
+
         width: 100%;
+
         box-sizing: border-box;
     }
 }

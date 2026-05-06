@@ -1,4 +1,5 @@
-// ===== IMPORTS =====
+// ================= IMPORTS =================
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -6,312 +7,558 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+
+// ================= SECRET KEY =================
+
 const JWT_SECRET = "mysupersecretkey";
 
 
-// ===== APP SETUP =====
+// ================= EXPRESS APP =================
+
 const app = express();
+
 app.use(express.json());
 
-const server = http.createServer(app);
-const io = new Server(server);
-
-
-// ===== STATIC FILES =====
 app.use(express.static("public"));
 
 
-// ===== DATABASE =====
+// ================= HTTP SERVER =================
+
+const server = http.createServer(app);
+
+
+// ================= SOCKET.IO =================
+
+const io = new Server(server, {
+
+    cors: {
+        origin: "*"
+    }
+
+});
+
+
+// ================= DATABASE CONNECTION =================
+
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log("MongoDB Error:", err));
+
+.then(() => {
+
+    console.log("MongoDB Connected");
+
+})
+
+.catch((err) => {
+
+    console.log("MongoDB Error:", err);
+
+});
 
 
-// ===== SCHEMAS =====
+// ================= USER SCHEMA =================
 
-// USER
 const userSchema = new mongoose.Schema({
-  username: String,
-  password: String
+
+    username: String,
+
+    password: String
+
 });
 
-// DEVICE
+
+// ================= DEVICE SCHEMA =================
+
 const deviceSchema = new mongoose.Schema({
-  name: String,
-  status: String,
-  type: String,
-  room: String,
-  userId: mongoose.Schema.Types.ObjectId
+
+    name: String,
+
+    status: String,
+
+    type: String,
+
+    room: String,
+
+    userId: mongoose.Schema.Types.ObjectId
+
 });
 
-// ROOM
+
+// ================= ROOM SCHEMA =================
+
 const roomSchema = new mongoose.Schema({
-  name: String,
-  userId: mongoose.Schema.Types.ObjectId
+
+    name: String,
+
+    userId: mongoose.Schema.Types.ObjectId
+
 });
 
 
-// ===== MODELS =====
-const User = mongoose.model("User", userSchema);
-const Device = mongoose.model("Device", deviceSchema);
-const Room = mongoose.model("Room", roomSchema);
+// ================= MODELS =================
+
+const User =
+    mongoose.model("User", userSchema);
+
+const Device =
+    mongoose.model("Device", deviceSchema);
+
+const Room =
+    mongoose.model("Room", roomSchema);
 
 
-// ===== AUTH ROUTES =====
 
-// REGISTER
+// ======================================================
+// ================= REGISTER ROUTE =====================
+// ======================================================
+
 app.post("/register", async (req, res) => {
 
-  const { username, password } = req.body;
+    const { username, password } = req.body;
 
-  if (!username || !password) {
-    return res.json({
-      message: "Username and password required"
+
+    // EMPTY CHECK
+
+    if (!username || !password) {
+
+        return res.json({
+
+            message:
+                "Username and password required"
+
+        });
+
+    }
+
+
+    // STRONG PASSWORD CHECK
+
+    const strongRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+
+    if (!strongRegex.test(password)) {
+
+        return res.json({
+
+            message:
+                "Weak password"
+
+        });
+
+    }
+
+
+    // USER EXISTS CHECK
+
+    const exists =
+        await User.findOne({ username });
+
+
+    if (exists) {
+
+        return res.json({
+
+            message:
+                "User already exists"
+
+        });
+
+    }
+
+
+    // HASH PASSWORD
+
+    const hashedPassword =
+        await bcrypt.hash(password, 10);
+
+
+    // CREATE USER
+
+    await User.create({
+
+        username,
+
+        password: hashedPassword
+
     });
-  }
 
-  // PASSWORD VALIDATION
-  const strongRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
-  if (!strongRegex.test(password)) {
-    return res.json({
-      message: "Weak password"
+    res.json({
+
+        message:
+            "User registered successfully"
+
     });
-  }
 
-  const exists = await User.findOne({ username });
-
-  if (exists) {
-    return res.json({
-      message: "User already exists"
-    });
-  }
-
-  const hashedPassword =
-    await bcrypt.hash(password, 10);
-
-  await User.create({
-    username,
-    password: hashedPassword
-  });
-
-  res.json({
-    message: "User registered successfully"
-  });
 });
 
 
-// LOGIN
+
+// ======================================================
+// ================= LOGIN ROUTE ========================
+// ======================================================
+
 app.post("/login", async (req, res) => {
 
-  const { username, password } = req.body;
+    const { username, password } = req.body;
 
-  const user = await User.findOne({ username });
 
-  if (!user) {
-    return res.json({
-      message: "Invalid credentials"
-    });
-  }
+    // FIND USER
 
-  const valid =
-    await bcrypt.compare(password, user.password);
+    const user =
+        await User.findOne({ username });
 
-  if (!valid) {
-    return res.json({
-      message: "Invalid credentials"
-    });
-  }
 
-  const token = jwt.sign(
-    { userId: user._id },
-    JWT_SECRET,
-    { expiresIn: "1h" }
-  );
+    if (!user) {
 
-  res.json({ token });
+        return res.json({
+
+            message:
+                "Invalid credentials"
+
+        });
+
+    }
+
+
+    // CHECK PASSWORD
+
+    const valid =
+        await bcrypt.compare(password, user.password);
+
+
+    if (!valid) {
+
+        return res.json({
+
+            message:
+                "Invalid credentials"
+
+        });
+
+    }
+
+
+    // CREATE TOKEN
+
+    const token = jwt.sign(
+
+        { userId: user._id },
+
+        JWT_SECRET,
+
+        { expiresIn: "1h" }
+
+    );
+
+
+    res.json({ token });
+
 });
 
 
-// ===== SOCKET AUTH =====
+
+// ======================================================
+// ================= SOCKET AUTH ========================
+// ======================================================
+
 io.use((socket, next) => {
 
-  const token = socket.handshake.auth.token;
+    const token =
+        socket.handshake.auth.token;
 
-  if (!token) {
-    return next(new Error("Authentication error"));
-  }
 
-  try {
+    if (!token) {
 
-    const decoded =
-      jwt.verify(token, JWT_SECRET);
+        return next(
+            new Error("Authentication error")
+        );
 
-    socket.userId = decoded.userId;
+    }
 
-    next();
 
-  } catch (err) {
+    try {
 
-    next(new Error("Authentication error"));
-  }
+        const decoded =
+            jwt.verify(token, JWT_SECRET);
+
+        socket.userId =
+            decoded.userId;
+
+        next();
+
+    }
+
+    catch (err) {
+
+        next(
+            new Error("Authentication error")
+        );
+
+    }
+
 });
 
 
-// ===== SOCKET CONNECTION =====
+
+// ======================================================
+// ================= SOCKET CONNECTION ==================
+// ======================================================
+
 io.on("connection", async (socket) => {
 
-  console.log("User connected");
+    console.log("User connected");
 
 
-  // ===== SEND DEVICES =====
-  const devices = await Device.find({
-    userId: socket.userId
-  });
+    // ================= SEND DEVICES =================
 
-  socket.emit("updateDevices", devices);
+    const devices =
+        await Device.find({
 
-  // ===== SEND ROOMS =====
-  const rooms = await Room.find({
-    userId: socket.userId
-  });
+            userId: socket.userId
 
-  socket.emit("updateRooms", rooms);
+        });
+
+    socket.emit(
+        "updateDevices",
+        devices
+    );
 
 
-  // ===== TOGGLE DEVICE =====
-  socket.on("toggleDevice", async (deviceName) => {
+    // ================= SEND ROOMS =================
 
-    const device = await Device.findOne({
-      name: deviceName,
-      userId: socket.userId
+    const rooms =
+        await Room.find({
+
+            userId: socket.userId
+
+        });
+
+    socket.emit(
+        "updateRooms",
+        rooms
+    );
+
+
+
+    // ==================================================
+    // ================= TOGGLE DEVICE ==================
+    // ==================================================
+
+    socket.on("toggleDevice", async (deviceName) => {
+
+        const device =
+            await Device.findOne({
+
+                name: deviceName,
+
+                userId: socket.userId
+
+            });
+
+
+        if (device) {
+
+            device.status =
+                device.status === "ON"
+                ? "OFF"
+                : "ON";
+
+            await device.save();
+
+        }
+
+
+        const updatedDevices =
+            await Device.find({
+
+                userId: socket.userId
+
+            });
+
+
+        socket.emit(
+            "updateDevices",
+            updatedDevices
+        );
+
     });
 
-    if (device) {
 
-      device.status =
-        device.status === "ON" ? "OFF" : "ON";
 
-      await device.save();
-    }
+    // ==================================================
+    // ================= ADD DEVICE =====================
+    // ==================================================
 
-    const updatedDevices = await Device.find({
-      userId: socket.userId
+    socket.on("addDevice", async (data) => {
+
+        const { name, type, room } = data;
+
+
+        if (!name || !type || !room)
+            return;
+
+
+        // CHECK EXISTING DEVICE
+
+        const exists =
+            await Device.findOne({
+
+                name,
+                room,
+
+                userId: socket.userId
+
+            });
+
+
+        // CREATE DEVICE
+
+        if (!exists) {
+
+            await Device.create({
+
+                name,
+
+                type,
+
+                room,
+
+                status: "OFF",
+
+                userId: socket.userId
+
+            });
+
+        }
+
+
+        const updatedDevices =
+            await Device.find({
+
+                userId: socket.userId
+
+            });
+
+
+        socket.emit(
+            "updateDevices",
+            updatedDevices
+        );
+
     });
 
-    socket.emit("updateDevices", updatedDevices);
-  });
 
 
-  // ===== ADD DEVICE =====
-  socket.on("addDevice", async (data) => {
+    // ==================================================
+    // ================= DELETE DEVICE ==================
+    // ==================================================
 
-    const { name, type, room } = data;
+    socket.on("deleteDevice", async (deviceName) => {
 
-    if (!name || !type || !room) return;
+        await Device.deleteOne({
 
-    const exists = await Device.findOne({
-      name: name,
-      room: room,
-      userId: socket.userId
+            name: deviceName,
+
+            userId: socket.userId
+
+        });
+
+
+        const updatedDevices =
+            await Device.find({
+
+                userId: socket.userId
+
+            });
+
+
+        socket.emit(
+            "updateDevices",
+            updatedDevices
+        );
+
     });
 
-    if (!exists) {
 
-      await Device.create({
-        name,
-        type,
-        room,
-        status: "OFF",
-        userId: socket.userId
-      });
-    }
 
-    const updatedDevices = await Device.find({
-      userId: socket.userId
+    // ==================================================
+    // ================= ADD ROOM =======================
+    // ==================================================
+
+    socket.on("addRoom", async (roomName) => {
+
+        if (!roomName) return;
+
+
+        // CHECK EXISTING ROOM
+
+        const exists =
+            await Room.findOne({
+
+                name: roomName,
+
+                userId: socket.userId
+
+            });
+
+
+        // CREATE ROOM
+
+        if (!exists) {
+
+            await Room.create({
+
+                name: roomName,
+
+                userId: socket.userId
+
+            });
+
+        }
+
+
+        const updatedRooms =
+            await Room.find({
+
+                userId: socket.userId
+
+            });
+
+
+        socket.emit(
+            "updateRooms",
+            updatedRooms
+        );
+
     });
 
-    socket.emit("updateDevices", updatedDevices);
-  });
 
-// ===== ADD ROOM =====
-socket.on("addRoom", async (roomName) => {
 
-  if (!roomName) return;
+    // ================= DISCONNECT =================
 
-  const exists = await Room.findOne({
-    name: roomName,
-    userId: socket.userId
-  });
+    socket.on("disconnect", () => {
 
-  if (!exists) {
+        console.log("User disconnected");
 
-    await Room.create({
-      name: roomName,
-      userId: socket.userId
     });
-  }
 
-  const updatedRooms = await Room.find({
-    userId: socket.userId
-  });
-
-  socket.emit("updateRooms", updatedRooms);
 });
 
-  // ===== DELETE DEVICE =====
-  socket.on("deleteDevice", async (deviceName) => {
-
-    await Device.deleteOne({
-      name: deviceName,
-      userId: socket.userId
-    });
-
-    const updatedDevices = await Device.find({
-      userId: socket.userId
-    });
-
-    socket.emit("updateDevices", updatedDevices);
-  });
 
 
-  // ===== ADD ROOM =====
-  socket.on("addRoom", async (roomName) => {
+// ======================================================
+// ================= START SERVER =======================
+// ======================================================
 
-    if (!roomName) return;
+const PORT =
+    process.env.PORT || 3000;
 
-    const exists = await Room.findOne({
-      name: roomName,
-      userId: socket.userId
-    });
-
-    if (!exists) {
-
-      await Room.create({
-        name: roomName,
-        userId: socket.userId
-      });
-    }
-
-    const updatedRooms = await Room.find({
-      userId: socket.userId
-    });
-
-    socket.emit("updateRooms", updatedRooms);
-  });
-
-
-  // ===== DISCONNECT =====
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-
-});
-
-
-const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+    console.log(
+        `Server running on port ${PORT}`
+    );
+
 });
