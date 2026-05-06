@@ -97,39 +97,40 @@ socket.on("updateRooms", (rooms) => {
 // 🔥 MAIN RENDER FUNCTION
 function renderRooms() {
 
-    const container = document.getElementById("deviceContainer");
+    const container =
+        document.getElementById("deviceContainer");
+
     container.innerHTML = "";
 
     const rooms = {};
 
-    // Group devices
+    // GROUP DEVICES BY ROOM
     allDevices.forEach(device => {
+
         if (!rooms[device.room]) {
             rooms[device.room] = [];
         }
+
         rooms[device.room].push(device);
     });
 
-    // Merge DB rooms + custom rooms
-   const allRoomsList = [...new Set([
-    ...Object.keys(rooms),
-    ...allRooms
-])];
+    // CREATE ROOM CARDS ONLY
+    allRooms.forEach(room => {
 
-    // Render cards
-    allRoomsList.forEach(room => {
-
-        const count = rooms[room] ? rooms[room].length : 0;
+        const roomDevices = rooms[room] || [];
 
         let onCount = 0;
         let offCount = 0;
 
-        if (rooms[room]) {
-            rooms[room].forEach(d => {
-                if (d.status === "ON") onCount++;
-                else offCount++;
-            });
-        }
+        roomDevices.forEach(device => {
+
+            if (device.status === "ON") {
+                onCount++;
+            } else {
+                offCount++;
+            }
+
+        });
 
         container.innerHTML += `
             <div class="card"
@@ -137,16 +138,23 @@ function renderRooms() {
                  style="cursor:pointer;">
 
                 <h2>🏠</h2>
+
                 <h3>${room}</h3>
-                <p>${count} Devices</p>
-                <p style="color:#00ff88;">ON: ${onCount}</p>
-                <p style="color:#ff4d4d;">OFF: ${offCount}</p>
+
+                <p>Total Devices: ${roomDevices.length}</p>
+
+                <p style="color:#00ff88;">
+                    ON: ${onCount}
+                </p>
+
+                <p style="color:#ff4d4d;">
+                    OFF: ${offCount}
+                </p>
 
             </div>
         `;
     });
 }
-
 
 // ➕ ADD DEVICE
 function addDevice() {
