@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Smart Home Control</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left"></div>
+
+    <div class="header-center">
+        Smart Home Control Panel
+    </div>
+
+    <div class="header-right">
+        <button onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<!-- PANEL -->
+<div class="panel">
+
+    <!-- ADD DEVICE -->
+    <input type="text" id="newDevice" placeholder="Device name">
+
+    <select id="deviceType">
+        <option value="light">Light</option>
+        <option value="fan">Fan</option>
+        <option value="ac">AC</option>
+        <option value="tv">TV</option>
+    </select>
+
+    <select id="deviceRoom">
+        <option value="Living Room">Living Room</option>
+        <option value="Bedroom">Bedroom</option>
+    </select>
+
+    <button onclick="addDevice()">Add Device</button>
+
+    <br><br>
+
+    <!-- ADD ROOM -->
+    <input type="text" id="newRoom" placeholder="New Room Name">
+    <button onclick="addRoom()">Add Room</button>
+
+</div>
+
+<!-- ROOM DASHBOARD -->
+<div id="deviceContainer" class="container"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+// 🔒 AUTH CHECK
+if (!localStorage.getItem("token")) {
+    window.location.href = "/login.html";
+}
+
+// 🔌 SOCKET CONNECT
+const socket = io({
+    auth: {
+        token: localStorage.getItem("token")
+    }
+});
+
+// ❌ INVALID TOKEN
+socket.on("connect_error", () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login.html";
+});
+
+// STORE DEVICES
+let allDevices = [];
+let allRooms = [];
+
+// RECEIVE DEVICES
+socket.on("updateDevices", (devices) => {
+    allDevices = devices;
+    renderRooms();
+});
+
+socket.on("updateRooms", (rooms) => {
+
+    allRooms = rooms.map(r => r.name);
+
+    renderRooms();
+});
+
+// 🔥 MAIN RENDER FUNCTION
+function renderRooms() {
+
+    const container = document.getElementById("deviceContainer");
+    container.innerHTML = "";
+
+    const rooms = {};
+
+    // Group devices
+    allDevices.forEach(device => {
+        if (!rooms[device.room]) {
+            rooms[device.room] = [];
+        }
+        rooms[device.room].push(device);
+    });
+
+    // Merge DB rooms + custom rooms
+   const allRoomsList = [...new Set([
+    ...Object.keys(rooms),
+    ...allRooms
+])];
+
+    // Render cards
+    allRoomsList.forEach(room => {
+
+        const count = rooms[room] ? rooms[room].length : 0;
+
+        let onCount = 0;
+        let offCount = 0;
+
+        if (rooms[room]) {
+            rooms[room].forEach(d => {
+                if (d.status === "ON") onCount++;
+                else offCount++;
+            });
+        }
+
+        container.innerHTML += `
+            <div class="card"
+                 onclick="openRoom('${room}')"
+                 style="cursor:pointer;">
+
+                <h2>🏠</h2>
+                <h3>${room}</h3>
+                <p>${count} Devices</p>
+                <p style="color:#00ff88;">ON: ${onCount}</p>
+                <p style="color:#ff4d4d;">OFF: ${offCount}</p>
+
+            </div>
+        `;
+    });
+}
+
+
+// ➕ ADD DEVICE
+function addDevice() {
+
+    const name = document.getElementById("newDevice").value;
+    const type = document.getElementById("deviceType").value;
+    const room = document.getElementById("deviceRoom").value;
+
+    if (!name) return;
+
+    socket.emit("addDevice", { name, type, room });
+
+    document.getElementById("newDevice").value = "";
+}
+
+
+// ➕ ADD ROOM (FRONTEND ONLY)
+function addRoom() {
+
+    const room = document.getElementById("newRoom").value;
+
+    if (!room) return;
+
+    socket.emit("addRoom", room);
+
+    document.getElementById("newRoom").value = "";
+}
+
+// 🔁 TOGGLE DEVICE
+function toggleDevice(device) {
+    socket.emit("toggleDevice", device);
+}
+
+
+// ❌ DELETE DEVICE
+function deleteDevice(device) {
+    socket.emit("deleteDevice", device);
+}
+
+
+// 🚪 LOGOUT
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "/login.html";
+}
+
+
+// 🔗 OPEN ROOM PAGE
+function openRoom(room) {
+    window.location.href = `/room.html?room=${room}`;
+}
+
+</script>
+
+</body>
+</html>

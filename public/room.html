@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Room Devices</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="header">
+    <div class="header-left"></div>
+
+    <div class="header-center" id="roomTitle">
+        Room
+    </div>
+
+    <div class="header-right">
+        <button onclick="goBack()">Back</button>
+    </div>
+</div>
+
+<div id="deviceContainer" class="container"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+// 🔒 Auth
+if (!localStorage.getItem("token")) {
+    window.location.href = "/login.html";
+}
+
+// 🔌 Socket
+const socket = io({
+    auth: {
+        token: localStorage.getItem("token")
+    }
+});
+
+// ❌ invalid token
+socket.on("connect_error", () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login.html";
+});
+
+// 📌 Get room from URL
+const params = new URLSearchParams(window.location.search);
+const selectedRoom = params.get("room");
+
+// Set title
+document.getElementById("roomTitle").innerText = selectedRoom;
+
+
+// 🔄 Load devices
+socket.on("updateDevices", (devices) => {
+
+    const container = document.getElementById("deviceContainer");
+    container.innerHTML = "";
+
+    // Filter by room
+    const roomDevices = devices.filter(d => d.room === selectedRoom);
+
+    roomDevices.forEach(device => {
+
+        let icon = "🔌";
+
+        if (device.type === "light") icon = "💡";
+        if (device.type === "fan") icon = "🌀";
+        if (device.type === "ac") icon = "❄";
+        if (device.type === "tv") icon = "📺";
+
+        const statusClass =
+            device.status === "ON" ? "status-on" : "status-off";
+
+        container.innerHTML += `
+            <div class="card">
+                <h2>${icon}</h2>
+                <h3>${device.name}</h3>
+                <p class="${statusClass}">${device.status}</p>
+
+                <label class="switch">
+    <input type="checkbox"
+        ${device.status === "ON" ? "checked" : ""}
+        onchange="toggleDevice('${device.name}')">
+    <span class="slider"></span>
+</label>
+
+                <button onclick="deleteDevice('${device.name}')">
+                    Delete
+                </button>
+            </div>
+        `;
+    });
+});
+
+
+// 🔁 Actions
+function toggleDevice(name) {
+    socket.emit("toggleDevice", name);
+}
+
+function deleteDevice(name) {
+    socket.emit("deleteDevice", name);
+}
+
+// 🔙 Back
+function goBack() {
+    window.location.href = "/";
+}
+
+</script>
+
+</body>
+</html>

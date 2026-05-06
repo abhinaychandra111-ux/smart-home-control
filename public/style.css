@@ -1,0 +1,274 @@
+/* ================= BODY ================= */
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+
+    background:
+        linear-gradient(rgba(10,10,20,0.65), rgba(10,10,20,0.65)),
+        url("images/background.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+
+    margin: 0;
+    padding: 20px;
+
+    color: white;
+}
+
+
+/* ================= HEADER ================= */
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 15px 25px;
+
+    background: rgba(255,255,255,0.08);
+
+    backdrop-filter: blur(15px);
+
+    border-radius: 15px;
+
+    margin-bottom: 30px;
+}
+
+.header-left {
+    width: 120px;
+}
+
+.header-center {
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.header-right {
+    width: 120px;
+    text-align: right;
+}
+
+
+/* ================= PANEL ================= */
+
+.panel {
+    background: rgba(255,255,255,0.08);
+
+    backdrop-filter: blur(15px);
+
+    padding: 15px;
+
+    border-radius: 15px;
+
+    border: 1px solid rgba(255,255,255,0.2);
+
+    display: inline-block;
+}
+
+
+/* ================= INPUT & SELECT ================= */
+
+input, select {
+    padding: 8px;
+    margin: 5px;
+
+    border-radius: 5px;
+    border: none;
+
+    outline: none;
+}
+
+
+/* ================= CONTAINER ================= */
+
+.container {
+    display: grid;
+
+    grid-template-columns: repeat(auto-fit, 220px);
+
+    gap: 20px;
+
+    justify-content: center;
+
+    margin-top: 30px;
+}
+
+
+/* ================= CARD ================= */
+
+.card {
+    width: 220px;
+
+    padding: 15px;
+
+    text-align: center;
+
+    background: rgba(255,255,255,0.08);
+
+    backdrop-filter: blur(15px);
+
+    border-radius: 15px;
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px) scale(1.03);
+
+    background: rgba(255,255,255,0.15);
+}
+
+
+/* ================= BUTTON ================= */
+
+button {
+    background: rgba(255,255,255,0.1);
+
+    backdrop-filter: blur(10px);
+
+    border: 1px solid rgba(255,255,255,0.2);
+
+    color: white;
+
+    padding: 8px 15px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+button:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+
+/* ================= STATUS ================= */
+
+.status-on {
+    color: #00ff88;
+    font-weight: bold;
+}
+
+.status-off {
+    color: #ff4d4d;
+    font-weight: bold;
+}
+
+/* TOGGLE SWITCH */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  background-color: #ccc;
+
+  transition: 0.4s;
+
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+
+  height: 18px;
+  width: 18px;
+
+  left: 3px;
+  bottom: 3px;
+
+  background-color: white;
+
+  transition: 0.4s;
+
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #00ff88;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* ================= MOBILE RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+
+    body {
+        padding: 10px;
+    }
+
+    /* HEADER */
+    .header {
+        flex-direction: column;
+        gap: 15px;
+
+        text-align: center;
+    }
+
+    .header-left,
+    .header-right {
+        width: auto;
+    }
+
+    .header-center {
+        font-size: 22px;
+    }
+
+    /* PANEL */
+    .panel {
+        width: 100%;
+        box-sizing: border-box;
+
+        text-align: center;
+    }
+
+    /* INPUTS */
+    input,
+    select,
+    button {
+        width: 100%;
+        margin: 8px 0;
+
+        box-sizing: border-box;
+    }
+
+    /* CARDS */
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}

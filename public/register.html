@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #1e1e2f;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #2c2c3e;
+      padding: 30px;
+      border-radius: 10px;
+      width: 320px;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      padding: 8px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      background: #007bff;
+      color: white;
+    }
+
+    .password-container {
+      position: relative;
+    }
+
+    .password-container input {
+      padding-right: 40px;
+    }
+
+    .eye {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+
+    .strength {
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    .weak { color: red; }
+    .medium { color: orange; }
+    .strong { color: lime; }
+
+    a {
+      color: lightblue;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2>Create Account</h2>
+
+  <input type="text" id="username" placeholder="Username">
+
+  <!-- Password -->
+  <div class="password-container">
+    <input type="password" id="password" placeholder="Password">
+    <span class="eye" onclick="togglePassword('password')">👁</span>
+  </div>
+
+  <!-- Confirm Password -->
+  <div class="password-container">
+    <input type="password" id="confirmPassword" placeholder="Confirm Password">
+    <span class="eye" onclick="togglePassword('confirmPassword')">👁</span>
+  </div>
+
+  <!-- Strength -->
+  <p id="strength" class="strength"></p>
+
+  <button onclick="register()">Register</button>
+
+  <p id="message"></p>
+
+  <p>
+    Already have account?
+    <a href="/login.html">Login</a>
+  </p>
+
+</div>
+
+<script>
+
+function togglePassword(id) {
+  const field = document.getElementById(id);
+  field.type = field.type === "password" ? "text" : "password";
+}
+
+
+// Password strength
+function checkStrength(password) {
+
+  const strengthText = document.getElementById("strength");
+
+  const strongRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+  if (password.length < 6) {
+    strengthText.innerText = "Weak password";
+    strengthText.className = "strength weak";
+
+  } else if (strongRegex.test(password)) {
+    strengthText.innerText = "Strong password";
+    strengthText.className = "strength strong";
+
+  } else {
+    strengthText.innerText =
+      "Medium (add uppercase, number, special char)";
+    strengthText.className = "strength medium";
+  }
+}
+
+
+// Live strength
+document.getElementById("password")
+.addEventListener("input", function () {
+  checkStrength(this.value);
+});
+
+
+// Register
+async function register() {
+
+  const username =
+    document.getElementById("username").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  const confirmPassword =
+    document.getElementById("confirmPassword").value;
+
+  const message =
+    document.getElementById("message");
+
+  // Validation
+  if (!username || !password) {
+    message.innerText = "Username and password required";
+    return;
+  }
+
+  if (username.length < 3) {
+    message.innerText = "Username must be at least 3 characters";
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    message.innerText = "Passwords do not match";
+    return;
+  }
+
+  const strongRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+  if (!strongRegex.test(password)) {
+    message.innerText =
+      "Password must contain uppercase, lowercase, number, special char";
+    return;
+  }
+
+  const res = await fetch("/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+
+  message.innerText = data.message;
+
+  // Clear fields
+  document.getElementById("username").value = "";
+  document.getElementById("password").value = "";
+  document.getElementById("confirmPassword").value = "";
+
+  // Redirect after success
+  if (data.message === "User registered successfully") {
+    setTimeout(() => {
+      window.location.href = "/login.html";
+    }, 1000);
+  }
+}
+
+</script>
+
+</body>
+</html>
