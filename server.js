@@ -146,6 +146,20 @@ const roomSchema = new mongoose.Schema({
 
 });
 
+const automationSchema = new mongoose.Schema({
+
+    room: String,
+
+    deviceName: String,
+
+    action: String,
+
+    time: String,
+
+    userId: mongoose.Schema.Types.ObjectId
+
+});
+
 
 
 // ======================================================
@@ -161,7 +175,9 @@ const Device =
 const Room =
     mongoose.model("Room", roomSchema);
 
-
+const Automation =
+    mongoose.model("Automation",
+    automationSchema);
 
 
 // ======================================================
@@ -369,6 +385,8 @@ io.on("connection", async (socket) => {
 
     console.log("User connected");
 
+
+      
 
 
     // ==================================================
@@ -663,9 +681,70 @@ io.on("connection", async (socket) => {
 
     });
 
+     // ==================================================
+    // ================= ADDAUTOMATION ====================
+    // ==================================================
+ socket.on("addAutomation", async (data) => {
+
+    await Automation.create({
+
+        room: data.room,
+
+        deviceName:
+            data.deviceName,
+
+        action: data.action,
+
+        time: data.time,
+
+        userId: socket.userId
+
+    });
+
+    const automations =
+    await Automation.find({
+
+        userId: socket.userId
+
+    });
+
+    socket.emit(
+        "updateAutomations",
+        automations
+    );
+
+});
 
 
+ // ==================================================
+    // ================= DELETEAUTOMATION ====================
+socket.on(
+"deleteAutomation",
+async (automationId) => {
 
+    await Automation.deleteOne({
+
+        _id: automationId,
+
+        userId: socket.userId
+
+    });
+
+
+    const automations =
+    await Automation.find({
+
+        userId: socket.userId
+
+    });
+
+
+    socket.emit(
+        "updateAutomations",
+        automations
+    );
+
+});
     // ==================================================
     // ================= BRIGHTNESS =====================
     // ==================================================
@@ -875,7 +954,72 @@ io.on("connection", async (socket) => {
 });
 
 
+setInterval(async () => {
 
+    // CURRENT TIME
+
+    const now = new Date();
+
+    const hours =
+        String(now.getHours())
+        .padStart(2, "0");
+
+    const minutes =
+        String(now.getMinutes())
+        .padStart(2, "0");
+
+    const currentTime =
+        `${hours}:${minutes}`;
+
+
+    // FIND MATCHING RULES
+
+    const automations =
+        await Automation.find({
+
+            time: currentTime
+
+        });
+
+
+    // EXECUTE RULES
+
+    for (const rule of automations) {
+
+        const device =
+            await Device.findOne({
+
+                name: rule.deviceName,
+
+                room: rule.room,
+
+                userId: rule.userId
+
+            });
+
+
+        if (device) {
+
+            device.status =
+                rule.action;
+
+            await device.save();
+
+            const updatedDevices =
+await Device.find({
+
+});
+
+io.emit(
+   "updateDevices",
+   updatedDevices
+);
+
+        }
+
+    }
+
+}, 60000);
 
 // ======================================================
 // ================= START SERVER =======================
@@ -892,3 +1036,4 @@ server.listen(PORT, () => {
     );
 
 });
+

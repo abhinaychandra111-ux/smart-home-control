@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Automation Rules</title>
+
+    <link rel="stylesheet"
+          href="style.css">
+
+    <!-- GOOGLE FONT -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="layout">
+
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div>
+
+            <h1 class="logo">
+
+                ⚡ SmartHome
+
+            </h1>
+
+            <nav>
+
+                <a onclick="goDashboard()">
+
+                    🏠 Dashboard
+
+                </a>
+
+                <a class="active">
+
+                    🤖 Automations
+
+                </a>
+
+            </nav>
+
+        </div>
+
+
+        <button class="logout-btn"
+                onclick="logout()">
+
+            Logout
+
+        </button>
+
+    </aside>
+
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main-content">
+
+
+        <!-- ================= TOPBAR ================= -->
+
+        <div class="topbar">
+
+            <div>
+
+                <h2>
+
+                    Automation Rules
+
+                </h2>
+
+                <p>
+
+                    Schedule automatic device actions
+
+                </p>
+
+            </div>
+
+            <div class="top-right">
+
+                🤖
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ================= ADD AUTOMATION ================= -->
+
+        <div class="glass-card add-room-box fade-in">
+
+            <!-- ROOM -->
+
+            <select id="roomSelect">
+
+                <option value="">
+
+                    Select Room
+
+                </option>
+
+            </select>
+
+
+            <!-- DEVICE -->
+
+            <select id="deviceSelect">
+
+                <option value="">
+
+                    Select Device
+
+                </option>
+
+            </select>
+
+
+            <!-- ACTION -->
+
+            <select id="actionSelect">
+
+                <option value="ON">
+
+                    Turn ON
+
+                </option>
+
+                <option value="OFF">
+
+                    Turn OFF
+
+                </option>
+
+            </select>
+
+
+            <!-- TIME -->
+
+            <input type="time"
+                   id="timeInput">
+
+
+            <!-- BUTTON -->
+
+            <button onclick="addAutomation()">
+
+                Save Rule
+
+            </button>
+
+        </div>
+
+
+
+        <!-- ================= RULE LIST ================= -->
+
+        <div id="automationContainer"
+             class="room-grid">
+
+        </div>
+
+    </main>
+
+</div>
+
+
+
+<!-- ================= SOCKET.IO ================= -->
+
+<script src="/socket.io/socket.io.js"></script>
+
+
+
+<script>
+
+// ================= AUTH =================
+
+if (!localStorage.getItem("token")) {
+
+    window.location.href = "/login.html";
+}
+
+
+
+// ================= SOCKET =================
+
+const socket = io({
+
+    auth: {
+
+        token: localStorage.getItem("token")
+
+    }
+
+});
+
+
+
+let allDevices = [];
+
+let allRooms = [];
+
+let allAutomations = [];
+
+
+
+// ================= RECEIVE ROOMS =================
+
+socket.on("updateRooms", (rooms) => {
+
+    allRooms = rooms;
+
+    renderRoomOptions();
+
+});
+
+
+
+// ================= RECEIVE DEVICES =================
+
+socket.on("updateDevices", (devices) => {
+
+    allDevices = devices;
+
+});
+
+
+
+// ================= RECEIVE AUTOMATIONS =================
+
+socket.on("updateAutomations", (automations) => {
+
+    allAutomations = automations;
+
+    renderAutomations();
+
+});
+
+
+
+// ================= RENDER ROOM OPTIONS =================
+
+function renderRoomOptions() {
+
+    const roomSelect =
+        document.getElementById("roomSelect");
+
+    roomSelect.innerHTML = `
+
+        <option value="">
+
+            Select Room
+
+        </option>
+
+    `;
+
+
+    allRooms.forEach(room => {
+
+        roomSelect.innerHTML += `
+
+            <option value="${room.name}">
+
+                ${room.name}
+
+            </option>
+
+        `;
+
+    });
+
+}
+
+
+
+// ================= ROOM CHANGE =================
+
+document.getElementById("roomSelect")
+.addEventListener("change", function () {
+
+    const selectedRoom = this.value;
+
+    const deviceSelect =
+        document.getElementById("deviceSelect");
+
+    deviceSelect.innerHTML = `
+
+        <option value="">
+
+            Select Device
+
+        </option>
+
+    `;
+
+
+    const filtered =
+        allDevices.filter(device =>
+            device.room === selectedRoom
+        );
+
+
+    filtered.forEach(device => {
+
+        deviceSelect.innerHTML += `
+
+            <option value="${device.name}">
+
+                ${device.name}
+
+            </option>
+
+        `;
+
+    });
+
+});
+
+
+
+// ================= ADD AUTOMATION =================
+
+function addAutomation() {
+
+    const room =
+        document.getElementById("roomSelect").value;
+
+    const deviceName =
+        document.getElementById("deviceSelect").value;
+
+    const action =
+        document.getElementById("actionSelect").value;
+
+    const time =
+        document.getElementById("timeInput").value;
+
+
+    if (!room ||
+        !deviceName ||
+        !time) {
+
+        alert("Fill all fields");
+
+        return;
+    }
+
+
+    socket.emit("addAutomation", {
+
+        room,
+
+        deviceName,
+
+        action,
+
+        time
+
+    });
+
+}
+
+
+// ================= DELETE AUTOMATION =================
+function deleteAutomation(id) {
+
+    socket.emit(
+        "deleteAutomation",
+        id
+    );
+
+}
+
+// ================= RENDER AUTOMATIONS =================
+
+function renderAutomations() {
+
+    const container =
+        document.getElementById("automationContainer");
+
+    container.innerHTML = "";
+
+
+    allAutomations.forEach(rule => {
+
+        container.innerHTML += `
+
+<br>
+
+<button onclick="deleteAutomation(
+'${rule._id}')">
+
+    Delete Rule
+
+</button>
+            <div class="room-card glass-card fade-in">
+
+                <div class="room-icon">
+
+                    🤖
+
+                </div>
+
+                <h2>
+
+                    ${rule.deviceName}
+
+                </h2>
+
+                <p>
+
+                    Room:
+                    ${rule.room}
+
+                </p>
+
+                <p>
+
+                    Action:
+                    ${rule.action}
+
+                </p>
+
+                <p>
+
+                    Time:
+                    ${rule.time}
+
+                </p>
+
+            </div>
+
+        `;
+
+    });
+
+}
+
+
+
+// ================= DASHBOARD =================
+
+function goDashboard() {
+
+    window.location.href = "/";
+
+}
+
+
+
+// ================= LOGOUT =================
+
+function logout() {
+
+    localStorage.removeItem("token");
+
+    window.location.href = "/login.html";
+
+}
+
+</script>
+
+</body>
+</html>
