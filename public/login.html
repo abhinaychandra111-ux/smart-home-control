@@ -1,67 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-    <title>Login</title>
+    <meta charset="UTF-8">
 
     <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+          content="width=device-width,
+                   initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+    <title>SmartHome Login</title>
+
+    <link rel="stylesheet"
+          href="style.css">
+
+
+    <!-- GOOGLE FONT -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
 
 </head>
 
 <body class="auth-body">
 
-<div class="auth-box">
 
-    <h2>Login</h2>
+<div class="auth-box fade-in">
 
-    <!-- USERNAME -->
+
+    <!-- ================= LOGO ================= -->
+
+    <h1 class="logo">
+
+        ⚡ SmartHome
+
+    </h1>
+
+
+    <!-- ================= TITLE ================= -->
+
+    <h2>
+
+        Welcome Back
+
+    </h2>
+
+    <p class="auth-subtitle">
+
+        Login to control your smart devices
+
+    </p>
+
+
+
+    <!-- ================= USERNAME ================= -->
 
     <input type="text"
            id="username"
-           placeholder="Username">
+           placeholder="Enter Username">
 
 
-    <!-- PASSWORD -->
+
+    <!-- ================= PASSWORD ================= -->
 
     <div class="password-box">
 
         <input type="password"
                id="password"
-               placeholder="Password">
+               placeholder="Enter Password">
 
         <span onclick="togglePassword()"
               class="eye-btn">
 
-              👁
+            👁
 
         </span>
 
     </div>
 
 
-    <!-- LOGIN BUTTON -->
 
-    <button onclick="login()">
+    <!-- ================= LOGIN BUTTON ================= -->
+
+    <button id="loginBtn"
+            onclick="login()">
 
         Login
 
     </button>
 
 
-    <!-- MESSAGE -->
 
-    <p id="message"></p>
+    <!-- ================= MESSAGE ================= -->
+
+    <p id="message"
+       class="error-text">
+
+    </p>
 
 
-    <!-- REGISTER LINK -->
 
-    <p>
+    <!-- ================= REGISTER ================= -->
 
-        Don't have account?
+    <p class="bottom-text">
+
+        Don't have an account?
 
         <a href="/register.html">
 
@@ -74,69 +124,180 @@
 </div>
 
 
+
 <script>
 
-// ================= PASSWORD SHOW/HIDE =================
+// ================= AUTO LOGIN ON ENTER =================
+
+document.addEventListener(
+"keypress",
+function(event) {
+
+    if (event.key === "Enter") {
+
+        login();
+
+    }
+
+});
+
+
+
+// ================= PASSWORD TOGGLE =================
 
 function togglePassword() {
 
     const password =
-        document.getElementById("password");
+        document.getElementById(
+            "password"
+        );
+
 
     password.type =
+
         password.type === "password"
+
         ? "text"
+
         : "password";
+
 }
 
 
-// ================= LOGIN FUNCTION =================
+
+// ================= LOGIN =================
 
 async function login() {
 
     const username =
-        document.getElementById("username").value;
+        document.getElementById(
+            "username"
+        ).value.trim();
+
 
     const password =
-        document.getElementById("password").value;
+        document.getElementById(
+            "password"
+        ).value.trim();
 
 
-    const res = await fetch("/login", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            username,
-            password
-        })
-
-    });
+    const message =
+        document.getElementById(
+            "message"
+        );
 
 
-    const data = await res.json();
+    const loginBtn =
+        document.getElementById(
+            "loginBtn"
+        );
 
 
-    // SUCCESS LOGIN
 
-    if (data.token) {
+    // CLEAR MESSAGE
 
-        localStorage.setItem("token", data.token);
+    message.innerText = "";
 
-        window.location.href = "/";
+
+
+    // VALIDATION
+
+    if (!username || !password) {
+
+        message.innerText =
+            "Fill all fields";
+
+        return;
 
     }
 
-    // FAILED LOGIN
 
-    else {
 
-        document.getElementById("message").innerText =
-            data.message;
+    // LOADING STATE
+
+    loginBtn.innerText =
+        "Logging in...";
+
+    loginBtn.disabled = true;
+
+
+
+    try {
+
+        const res =
+            await fetch("/login", {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type":
+                    "application/json"
+
+                },
+
+                body: JSON.stringify({
+
+                    username,
+
+                    password
+
+                })
+
+            });
+
+
+        const data =
+            await res.json();
+
+
+
+        // SUCCESS
+
+        if (data.token) {
+
+            localStorage.setItem(
+
+                "token",
+
+                data.token
+
+            );
+
+
+            window.location.href = "/";
+
+        }
+
+
+        // ERROR
+
+        else {
+
+            message.innerText =
+                data.message ||
+                "Login failed";
+
+        }
+
     }
+
+    catch (err) {
+
+        message.innerText =
+            "Server error";
+
+    }
+
+
+
+    // RESET BUTTON
+
+    loginBtn.innerText =
+        "Login";
+
+    loginBtn.disabled = false;
+
 }
 
 </script>

@@ -51,29 +51,11 @@
 
                 </a>
 
-                <a>
-
-                    🛏 Rooms
-
-                </a>
-
-                <a>
-
-                    📊 Analytics
-
-                </a>
-
-                <a>
-
-                    ⚙ Settings
-
-                </a>
-
                 <a onclick="openAutomation()">
 
-    🤖 Automations
+                    🤖 Automations
 
-</a>
+                </a>
 
             </nav>
 
@@ -208,6 +190,42 @@
 
         </div>
 
+
+
+        <!-- ================= ACTIVITY ================= -->
+
+        <div class="glass-card activity-box fade-in">
+
+            <h2>
+
+                Recent Activity
+
+            </h2>
+
+            <div id="activityContainer">
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ================= ENERGY ================= -->
+
+        <div class="glass-card energy-box fade-in">
+
+            <h2>
+
+                Energy Usage
+
+            </h2>
+
+            <div id="energyContainer">
+
+            </div>
+
+        </div>
+
     </main>
 
 </div>
@@ -232,6 +250,7 @@
 if (!localStorage.getItem("token")) {
 
     window.location.href = "/login.html";
+
 }
 
 
@@ -279,7 +298,9 @@ socket.on("updateDevices", (devices) => {
     allDevices = devices;
 
     renderRooms();
-renderEnergy(devices);
+
+    renderEnergy(devices);
+
 });
 
 
@@ -291,6 +312,16 @@ socket.on("updateRooms", (rooms) => {
     allRooms = rooms.map(r => r.name);
 
     renderRooms();
+
+});
+
+
+
+// ================= RECEIVE LOGS =================
+
+socket.on("updateLogs", (logs) => {
+
+    renderLogs(logs);
 
 });
 
@@ -492,12 +523,18 @@ function logout() {
 
 }
 
+
+
+// ================= OPEN AUTOMATION =================
+
 function openAutomation() {
 
     window.location.href =
         "/automation.html";
 
 }
+
+
 
 // ================= CHART =================
 
@@ -581,12 +618,17 @@ function updateChart(onCount, offCount) {
     });
 
 }
+
+
+
+// ================= LOGS =================
+
 function renderLogs(logs) {
 
     const container =
-      document.getElementById(
-      "activityContainer"
-    );
+        document.getElementById(
+            "activityContainer"
+        );
 
     container.innerHTML = "";
 
@@ -601,7 +643,7 @@ function renderLogs(logs) {
 
                     <strong>
 
-                        ${log.device}
+                        ${log.device || "System"}
 
                     </strong>
 
@@ -628,12 +670,15 @@ function renderLogs(logs) {
 }
 
 
+
+// ================= ENERGY =================
+
 function renderEnergy(devices) {
 
     const container =
-    document.getElementById(
-        "energyContainer"
-    );
+        document.getElementById(
+            "energyContainer"
+        );
 
     container.innerHTML = "";
 
@@ -662,7 +707,7 @@ function renderEnergy(devices) {
 
                 <span>
 
-                    ${device.totalEnergy
+                    ${(device.totalEnergy || 0)
                     .toFixed(2)} kWh
 
                 </span>
@@ -674,29 +719,6 @@ function renderEnergy(devices) {
     });
 
 }
-
-<div class="glass-card
-            activity-box fade-in">
-
-    <h2>
-
-        Recent Activity
-
-    </h2>
-
-    <h2>Energy Usage</h2>
-
-    <div id="activityContainer">
-
-    </div>
-
-</div>
-
-socket.on("updateLogs", (logs) => {
-
-    renderLogs(logs);
-
-});
 
 </script>
 

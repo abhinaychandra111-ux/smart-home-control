@@ -1,19 +1,36 @@
-// ================= IMPORTS =================
+// ======================================================
+// ================= IMPORTS ============================
+// ======================================================
 
 const express = require("express");
+
 const http = require("http");
+
 const { Server } = require("socket.io");
+
 const mongoose = require("mongoose");
+
 const bcrypt = require("bcryptjs");
+
 const jwt = require("jsonwebtoken");
 
 
-// ================= SECRET KEY =================
 
-const JWT_SECRET = "mysupersecretkey";
+// ======================================================
+// ================= CONFIG =============================
+// ======================================================
+
+const JWT_SECRET =
+"mysupersecretkey";
+
+const PORT =
+process.env.PORT || 3000;
 
 
-// ================= EXPRESS APP =================
+
+// ======================================================
+// ================= EXPRESS APP ========================
+// ======================================================
 
 const app = express();
 
@@ -22,35 +39,59 @@ app.use(express.json());
 app.use(express.static("public"));
 
 
-// ================= HTTP SERVER =================
 
-const server = http.createServer(app);
+// ======================================================
+// ================= HTTP SERVER ========================
+// ======================================================
+
+const server =
+http.createServer(app);
 
 
-// ================= SOCKET.IO =================
 
-const io = new Server(server, {
+// ======================================================
+// ================= SOCKET.IO ==========================
+// ======================================================
+
+const io =
+new Server(server, {
 
     cors: {
+
         origin: "*"
+
     }
 
 });
 
 
-// ================= DATABASE =================
 
-mongoose.connect(process.env.MONGO_URI)
+// ======================================================
+// ================= DATABASE ===========================
+// ======================================================
+
+mongoose.connect(
+
+    process.env.MONGO_URI ||
+
+    "mongodb://127.0.0.1:27017/smarthome"
+
+)
 
 .then(() => {
 
-    console.log("MongoDB Connected");
+    console.log(
+        "MongoDB Connected"
+    );
 
 })
 
 .catch((err) => {
 
-    console.log("MongoDB Error:", err);
+    console.log(
+        "MongoDB Error:",
+        err
+    );
 
 });
 
@@ -60,7 +101,8 @@ mongoose.connect(process.env.MONGO_URI)
 // ================= USER SCHEMA ========================
 // ======================================================
 
-const userSchema = new mongoose.Schema({
+const userSchema =
+new mongoose.Schema({
 
     username: String,
 
@@ -74,7 +116,8 @@ const userSchema = new mongoose.Schema({
 // ================= DEVICE SCHEMA ======================
 // ======================================================
 
-const deviceSchema = new mongoose.Schema({
+const deviceSchema =
+new mongoose.Schema({
 
     name: String,
 
@@ -83,6 +126,7 @@ const deviceSchema = new mongoose.Schema({
     type: String,
 
     room: String,
+
 
 
     // LIGHT
@@ -96,6 +140,7 @@ const deviceSchema = new mongoose.Schema({
     },
 
 
+
     // FAN
 
     speed: {
@@ -105,6 +150,7 @@ const deviceSchema = new mongoose.Schema({
         default: "Medium"
 
     },
+
 
 
     // AC
@@ -118,6 +164,7 @@ const deviceSchema = new mongoose.Schema({
     },
 
 
+
     // TV
 
     volume: {
@@ -127,15 +174,41 @@ const deviceSchema = new mongoose.Schema({
         default: 50
 
     },
-power: {
 
-    type: Number,
 
-    default: 0
 
-},
+    // POWER
 
-    userId: mongoose.Schema.Types.ObjectId
+    power: {
+
+        type: Number,
+
+        default: 0
+
+    },
+
+
+
+    // ENERGY
+
+    totalEnergy: {
+
+        type: Number,
+
+        default: 0
+
+    },
+
+
+
+    // LAST ON TIME
+
+    lastOnTime: Date,
+
+
+
+    userId:
+    mongoose.Schema.Types.ObjectId
 
 });
 
@@ -145,15 +218,24 @@ power: {
 // ================= ROOM SCHEMA ========================
 // ======================================================
 
-const roomSchema = new mongoose.Schema({
+const roomSchema =
+new mongoose.Schema({
 
     name: String,
 
-    userId: mongoose.Schema.Types.ObjectId
+    userId:
+    mongoose.Schema.Types.ObjectId
 
 });
 
-const automationSchema = new mongoose.Schema({
+
+
+// ======================================================
+// ================= AUTOMATION SCHEMA ==================
+// ======================================================
+
+const automationSchema =
+new mongoose.Schema({
 
     room: String,
 
@@ -163,9 +245,16 @@ const automationSchema = new mongoose.Schema({
 
     time: String,
 
-    userId: mongoose.Schema.Types.ObjectId
+    userId:
+    mongoose.Schema.Types.ObjectId
 
 });
+
+
+
+// ======================================================
+// ================= LOG SCHEMA =========================
+// ======================================================
 
 const logSchema =
 new mongoose.Schema({
@@ -179,116 +268,172 @@ new mongoose.Schema({
     time: String,
 
     userId:
-      mongoose.Schema.Types.ObjectId
+    mongoose.Schema.Types.ObjectId
 
 });
+
+
 
 // ======================================================
 // ================= MODELS =============================
 // ======================================================
 
 const User =
-    mongoose.model("User", userSchema);
+mongoose.model(
+    "User",
+    userSchema
+);
 
 const Device =
-    mongoose.model("Device", deviceSchema);
+mongoose.model(
+    "Device",
+    deviceSchema
+);
 
 const Room =
-    mongoose.model("Room", roomSchema);
+mongoose.model(
+    "Room",
+    roomSchema
+);
 
 const Automation =
-    mongoose.model("Automation",
-    automationSchema);
-
-    const Log =
-mongoose.model("Log", logSchema
+mongoose.model(
+    "Automation",
+    automationSchema
 );
+
+const Log =
+mongoose.model(
+    "Log",
+    logSchema
+);
+
+
 
 // ======================================================
 // ================= REGISTER ===========================
 // ======================================================
 
-app.post("/register", async (req, res) => {
+app.post(
+"/register",
 
-    const { username, password } = req.body;
+async (req, res) => {
+
+    try {
+
+        const {
+            username,
+            password
+        } = req.body;
 
 
-    // EMPTY CHECK
 
-    if (!username || !password) {
+        // EMPTY
 
-        return res.json({
+        if (
+            !username ||
+            !password
+        ) {
 
-            message:
+            return res.json({
+
+                message:
                 "Username and password required"
 
+            });
+
+        }
+
+
+
+        // PASSWORD
+
+        const strongRegex =
+/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+
+
+       if (!strongRegex.test(password)) {
+
+    return res.json({
+
+        message: "Weak password"
+
+    });
+
+}
+
+
+
+        // USER EXISTS
+
+        const exists =
+        await User.findOne({
+
+            username
+
         });
 
-    }
 
+        if (exists) {
 
-    // PASSWORD STRENGTH
+            return res.json({
 
-    const strongRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-
-
-    if (!strongRegex.test(password)) {
-
-        return res.json({
-
-            message:
-                "Weak password"
-
-        });
-
-    }
-
-
-    // USER EXISTS
-
-    const exists =
-        await User.findOne({ username });
-
-
-    if (exists) {
-
-        return res.json({
-
-            message:
+                message:
                 "User already exists"
 
+            });
+
+        }
+
+
+
+        // HASH PASSWORD
+
+        const hashedPassword =
+        await bcrypt.hash(
+            password,
+            10
+        );
+
+
+
+        // CREATE USER
+
+        await User.create({
+
+            username,
+
+            password:
+            hashedPassword
+
+        });
+
+
+
+        res.json({
+
+            message:
+            "User registered successfully"
+
         });
 
     }
 
+    catch (err) {
 
-    // HASH PASSWORD
+        console.log(err);
 
-    const hashedPassword =
-        await bcrypt.hash(password, 10);
+        res.json({
 
+            message:
+            "Server error"
 
-    // CREATE USER
+        });
 
-    await User.create({
-
-        username,
-
-        password: hashedPassword
-
-    });
-
-
-    res.json({
-
-        message:
-            "User registered successfully"
-
-    });
+    }
 
 });
-
 
 
 
@@ -296,64 +441,111 @@ app.post("/register", async (req, res) => {
 // ================= LOGIN ==============================
 // ======================================================
 
-app.post("/login", async (req, res) => {
+app.post(
+"/login",
 
-    const { username, password } = req.body;
+async (req, res) => {
+
+    try {
+
+        const {
+            username,
+            password
+        } = req.body;
 
 
-    // FIND USER
 
-    const user =
-        await User.findOne({ username });
+        const user =
+        await User.findOne({
+
+            username
+
+        });
 
 
-    if (!user) {
 
-        return res.json({
+        if (!user) {
 
-            message:
+            return res.json({
+
+                message:
                 "Invalid credentials"
+
+            });
+
+        }
+
+
+
+        const valid =
+        await bcrypt.compare(
+
+            password,
+
+            user.password
+
+        );
+
+
+
+        if (!valid) {
+
+            return res.json({
+
+                message:
+                "Invalid credentials"
+
+            });
+
+        }
+
+
+
+        const token =
+        jwt.sign(
+
+            {
+
+                userId:
+                user._id
+
+            },
+
+            JWT_SECRET,
+
+            {
+
+                expiresIn:
+                "1h"
+
+            }
+
+        );
+
+
+
+        res.json({
+
+            token
 
         });
 
     }
 
+    catch (err) {
 
-    // CHECK PASSWORD
+        console.log(err);
 
-    const valid =
-        await bcrypt.compare(password, user.password);
-
-
-    if (!valid) {
-
-        return res.json({
+        res.json({
 
             message:
-                "Invalid credentials"
+            "Server error"
 
         });
 
     }
-
-
-    // TOKEN
-
-    const token = jwt.sign(
-
-        { userId: user._id },
-
-        JWT_SECRET,
-
-        { expiresIn: "1h" }
-
-    );
-
-
-    res.json({ token });
 
 });
-
 
 
 
@@ -364,25 +556,37 @@ app.post("/login", async (req, res) => {
 io.use((socket, next) => {
 
     const token =
-        socket.handshake.auth.token;
+    socket.handshake.auth.token;
+
 
 
     if (!token) {
 
         return next(
-            new Error("Authentication error")
+            new Error(
+                "Authentication error"
+            )
         );
 
     }
 
 
+
     try {
 
         const decoded =
-            jwt.verify(token, JWT_SECRET);
+        jwt.verify(
+
+            token,
+
+            JWT_SECRET
+
+        );
+
 
         socket.userId =
-            decoded.userId;
+        decoded.userId;
+
 
         next();
 
@@ -391,7 +595,9 @@ io.use((socket, next) => {
     catch (err) {
 
         next(
-            new Error("Authentication error")
+            new Error(
+                "Authentication error"
+            )
         );
 
     }
@@ -400,181 +606,325 @@ io.use((socket, next) => {
 
 
 
-
 // ======================================================
 // ================= SOCKET CONNECTION ==================
 // ======================================================
 
-io.on("connection", async (socket) => {
+io.on(
+"connection",
 
-    console.log("User connected");
+async (socket) => {
 
+    console.log(
+        "User connected"
+    );
 
-      
 
 
     // ==================================================
-    // ================= SEND DEVICES ===================
+    // ================= INITIAL DATA ===================
     // ==================================================
 
     const devices =
-        await Device.find({
+    await Device.find({
 
-            userId: socket.userId
+        userId: socket.userId
 
-        });
+    });
+
+
+    const rooms =
+    await Room.find({
+
+        userId: socket.userId
+
+    });
+
+
+    const automations =
+    await Automation.find({
+
+        userId: socket.userId
+
+    });
+
+
+    const logs =
+    await Log.find({
+
+        userId: socket.userId
+
+    })
+
+    .sort({ _id: -1 })
+
+    .limit(10);
+
+
 
     socket.emit(
         "updateDevices",
         devices
     );
 
-
-
-    // ==================================================
-    // ================= SEND ROOMS =====================
-    // ==================================================
-
-    const rooms =
-        await Room.find({
-
-            userId: socket.userId
-
-        });
-
     socket.emit(
         "updateRooms",
         rooms
     );
 
+    socket.emit(
+        "updateAutomations",
+        automations
+    );
+
+    socket.emit(
+        "updateLogs",
+        logs
+    );
+
 
 
     // ==================================================
-    // ================= TOGGLE DEVICE ==================
+    // ================= ADD ROOM =======================
     // ==================================================
 
-    socket.on("toggleDevice", async (deviceName) => {
+    socket.on(
+    "addRoom",
 
-        const device =
-            await Device.findOne({
+    async (roomName) => {
 
-                name: deviceName,
+        try {
 
-                userId: socket.userId
+            if (!roomName)
+                return;
+
+
+
+            const exists =
+            await Room.findOne({
+
+                name: roomName,
+
+                userId:
+                socket.userId
 
             });
 
 
-        if (device) {
 
-            device.status =
-                device.status === "ON"
-                ? "OFF"
-                : "ON";
+            if (!exists) {
 
-            await device.save();
+                await Room.create({
+
+                    name: roomName,
+
+                    userId:
+                    socket.userId
+
+                });
+
+            }
+
+
+
+            const updatedRooms =
+            await Room.find({
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            socket.emit(
+
+                "updateRooms",
+
+                updatedRooms
+
+            );
 
         }
-        device.lastOnTime =
-    new Date();
 
-       await Log.create({
+        catch (err) {
 
-    action:
-      `Turned ${device.status}`,
+            console.log(err);
 
-    device: device.name,
-
-    room: device.room,
-
-    time:
-      new Date()
-      .toLocaleString(),
-
-    userId: socket.userId
-
-}); 
-const now =
-    new Date();
-
-const hoursUsed =
-    (now - device.lastOnTime)
-    / (1000 * 60 * 60);
-        const updatedDevices =
-            await Device.find({
-
-                userId: socket.userId
-
-            });
-
-
-        socket.emit(
-            "updateDevices",
-            updatedDevices
-        );
+        }
 
     });
 
 
-const energyUsed =
 
-(device.power * hoursUsed)
-/ 1000;
+    // ==================================================
+    // ================= DELETE ROOM ====================
+    // ==================================================
+
+    socket.on(
+    "deleteRoom",
+
+    async (roomName) => {
+
+        try {
+
+            await Room.deleteOne({
+
+                name: roomName,
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            await Device.deleteMany({
+
+                room: roomName,
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            await Log.create({
+
+                action:
+                "Room deleted",
+
+                device:
+                "System",
+
+                room: roomName,
+
+                time:
+                new Date()
+                .toLocaleString(),
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            const updatedRooms =
+            await Room.find({
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            const updatedDevices =
+            await Device.find({
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            socket.emit(
+
+                "updateRooms",
+
+                updatedRooms
+
+            );
+
+
+
+            socket.emit(
+
+                "updateDevices",
+
+                updatedDevices
+
+            );
+
+        }
+
+        catch (err) {
+
+            console.log(err);
+
+        }
+
+    });
+
+
 
     // ==================================================
     // ================= ADD DEVICE =====================
     // ==================================================
 
-    socket.on("addDevice", async (data) => {
+    socket.on(
+    "addDevice",
 
-        const {
-            name,
-            type,
-            room
-        } = data;
+    async (data) => {
+
+        try {
+
+            const {
+
+                name,
+                type,
+                room
+
+            } = data;
 
 
-        if (!name || !type || !room)
-            return;
+
+            if (
+                !name ||
+                !type ||
+                !room
+            ) return;
 
 
-        const exists =
+
+            const exists =
             await Device.findOne({
 
                 name,
                 room,
 
-                userId: socket.userId
+                userId:
+                socket.userId
 
             });
 
-let power = 0;
 
-if (type === "light") {
 
-    power = 10;
+            if (exists)
+                return;
 
-}
 
-if (type === "fan") {
 
-    power = 70;
+            let power = 0;
 
-}
 
-if (type === "ac") {
 
-    power = 1500;
+            if (type === "light")
+                power = 10;
 
-}
+            if (type === "fan")
+                power = 70;
 
-if (type === "tv") {
+            if (type === "ac")
+                power = 1500;
 
-    power = 120;
+            if (type === "tv")
+                power = 120;
 
-}
 
-        if (!exists) {
 
             await Device.create({
 
@@ -588,28 +938,40 @@ if (type === "tv") {
 
                 status: "OFF",
 
-                userId: socket.userId
+                userId:
+                socket.userId
 
             });
+
+
+
+            const updatedDevices =
+            await Device.find({
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            socket.emit(
+
+                "updateDevices",
+
+                updatedDevices
+
+            );
 
         }
 
+        catch (err) {
 
-        const updatedDevices =
-            await Device.find({
+            console.log(err);
 
-                userId: socket.userId
-
-            });
-
-
-        socket.emit(
-            "updateDevices",
-            updatedDevices
-        );
+        }
 
     });
-
 
 
 
@@ -617,306 +979,446 @@ if (type === "tv") {
     // ================= DELETE DEVICE ==================
     // ==================================================
 
-    socket.on("deleteDevice", async (deviceName) => {
+    socket.on(
+    "deleteDevice",
 
-        await Device.deleteOne({
+    async (deviceName) => {
 
-            name: deviceName,
+        try {
 
-            userId: socket.userId
+            await Device.deleteOne({
 
-        });
+                name: deviceName,
+
+                userId:
+                socket.userId
+
+            });
 
 
-        const updatedDevices =
+
+            const updatedDevices =
             await Device.find({
 
-                userId: socket.userId
+                userId:
+                socket.userId
 
             });
 
 
-        socket.emit(
-            "updateDevices",
-            updatedDevices
-        );
 
-    });
+            socket.emit(
 
+                "updateDevices",
 
+                updatedDevices
 
-
-    // ==================================================
-    // ================= ADD ROOM =======================
-    // ==================================================
-
-    socket.on("addRoom", async (roomName) => {
-
-        if (!roomName) return;
-
-
-        const exists =
-            await Room.findOne({
-
-                name: roomName,
-
-                userId: socket.userId
-
-            });
-
-
-        if (!exists) {
-
-            await Room.create({
-
-                name: roomName,
-
-                userId: socket.userId
-
-            });
+            );
 
         }
 
+        catch (err) {
 
-        const updatedRooms =
-            await Room.find({
+            console.log(err);
 
-                userId: socket.userId
-
-            });
-
-
-        socket.emit(
-            "updateRooms",
-            updatedRooms
-        );
+        }
 
     });
 
 
 
-
     // ==================================================
-    // ================= DELETE ROOM ====================
+    // ================= TOGGLE DEVICE ==================
     // ==================================================
 
-    socket.on("deleteRoom", async (roomName) => {
+    socket.on(
+    "toggleDevice",
 
+    async (deviceName) => {
 
-        // DELETE ROOM
+        try {
 
-        await Room.deleteOne({
+            const device =
+            await Device.findOne({
 
-            name: roomName,
+                name: deviceName,
 
-            userId: socket.userId
-
-        });
-
-
-        // DELETE DEVICES INSIDE ROOM
-
-        await Device.deleteMany({
-
-            room: roomName,
-
-            userId: socket.userId
-
-        });
-
-
-        // UPDATED ROOMS
-
-        const updatedRooms =
-            await Room.find({
-
-                userId: socket.userId
+                userId:
+                socket.userId
 
             });
 
 
-        socket.emit(
-            "updateRooms",
-            updatedRooms
-        );
+
+            if (!device)
+                return;
 
 
-        // UPDATED DEVICES
 
-        const updatedDevices =
+            // TURN ON
+
+            if (
+                device.status ===
+                "OFF"
+            ) {
+
+                device.status =
+                "ON";
+
+                device.lastOnTime =
+                new Date();
+
+            }
+
+
+
+            // TURN OFF
+
+            else {
+
+                device.status =
+                "OFF";
+
+
+
+                if (
+                    device.lastOnTime
+                ) {
+
+                    const now =
+                    new Date();
+
+
+
+                    const hoursUsed =
+
+                    (now -
+                    device.lastOnTime)
+
+                    / (1000 * 60 * 60);
+
+
+
+                    const energyUsed =
+
+                    (device.power *
+                    hoursUsed)
+
+                    / 1000;
+
+
+
+                    device.totalEnergy +=
+                    energyUsed;
+
+                }
+
+            }
+
+
+
+            await device.save();
+
+
+
+            await Log.create({
+
+                action:
+                `Turned ${device.status}`,
+
+                device:
+                device.name,
+
+                room:
+                device.room,
+
+                time:
+                new Date()
+                .toLocaleString(),
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            const updatedDevices =
             await Device.find({
 
-                userId: socket.userId
+                userId:
+                socket.userId
 
             });
 
 
-        socket.emit(
-            "updateDevices",
-            updatedDevices
-        );
+
+            const logs =
+            await Log.find({
+
+                userId:
+                socket.userId
+
+            })
+
+            .sort({ _id: -1 })
+
+            .limit(10);
+
+
+
+            socket.emit(
+
+                "updateDevices",
+
+                updatedDevices
+
+            );
+
+
+
+            socket.emit(
+
+                "updateLogs",
+
+                logs
+
+            );
+
+        }
+
+        catch (err) {
+
+            console.log(err);
+
+        }
 
     });
 
-     // ==================================================
-    // ================= ADDAUTOMATION ====================
+
+
     // ==================================================
- socket.on("addAutomation", async (data) => {
+    // ================= AUTOMATION =====================
+    // ==================================================
 
-    await Automation.create({
+    socket.on(
+    "addAutomation",
 
-        room: data.room,
+    async (data) => {
 
-        deviceName:
-            data.deviceName,
+        try {
 
-        action: data.action,
+            await Automation.create({
 
-        time: data.time,
+                room:
+                data.room,
 
-        userId: socket.userId
+                deviceName:
+                data.deviceName,
+
+                action:
+                data.action,
+
+                time:
+                data.time,
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            const automations =
+            await Automation.find({
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            socket.emit(
+
+                "updateAutomations",
+
+                automations
+
+            );
+
+        }
+
+        catch (err) {
+
+            console.log(err);
+
+        }
 
     });
 
-    const automations =
-    await Automation.find({
 
-        userId: socket.userId
+
+    // ==================================================
+    // ================= DELETE AUTOMATION ==============
+    // ==================================================
+
+    socket.on(
+    "deleteAutomation",
+
+    async (automationId) => {
+
+        try {
+
+            await Automation.deleteOne({
+
+                _id:
+                automationId,
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            const automations =
+            await Automation.find({
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            socket.emit(
+
+                "updateAutomations",
+
+                automations
+
+            );
+
+        }
+
+        catch (err) {
+
+            console.log(err);
+
+        }
 
     });
 
-    socket.emit(
-        "updateAutomations",
-        automations
-    );
-
-});
 
 
- // ==================================================
-    // ================= DELETEAUTOMATION ====================
-socket.on(
-"deleteAutomation",
-async (automationId) => {
-
-    await Automation.deleteOne({
-
-        _id: automationId,
-
-        userId: socket.userId
-
-    });
-
-
-    const automations =
-    await Automation.find({
-
-        userId: socket.userId
-
-    });
-
-
-    socket.emit(
-        "updateAutomations",
-        automations
-    );
-
-});
     // ==================================================
     // ================= BRIGHTNESS =====================
     // ==================================================
 
-    socket.on("changeBrightness", async (data) => {
+    socket.on(
+    "changeBrightness",
 
-        const {
-            deviceName,
-            value
-        } = data;
-
+    async (data) => {
 
         const device =
-            await Device.findOne({
+        await Device.findOne({
 
-                name: deviceName,
+            name:
+            data.deviceName,
 
-                userId: socket.userId
+            userId:
+            socket.userId
 
-            });
+        });
+
 
 
         if (device) {
 
-            device.brightness = value;
+            device.brightness =
+            data.value;
 
             await device.save();
 
         }
 
 
+
         const updatedDevices =
-            await Device.find({
+        await Device.find({
 
-                userId: socket.userId
+            userId:
+            socket.userId
 
-            });
+        });
+
 
 
         socket.emit(
+
             "updateDevices",
+
             updatedDevices
+
         );
 
     });
 
 
 
-
     // ==================================================
-    // ================= FAN SPEED ======================
+    // ================= SPEED ==========================
     // ==================================================
 
-    socket.on("changeSpeed", async (data) => {
+    socket.on(
+    "changeSpeed",
 
-        const {
-            deviceName,
-            value
-        } = data;
-
+    async (data) => {
 
         const device =
-            await Device.findOne({
+        await Device.findOne({
 
-                name: deviceName,
+            name:
+            data.deviceName,
 
-                userId: socket.userId
+            userId:
+            socket.userId
 
-            });
+        });
+
 
 
         if (device) {
 
-            device.speed = value;
+            device.speed =
+            data.value;
 
             await device.save();
 
         }
 
 
+
         const updatedDevices =
-            await Device.find({
+        await Device.find({
 
-                userId: socket.userId
+            userId:
+            socket.userId
 
-            });
+        });
+
 
 
         socket.emit(
+
             "updateDevices",
+
             updatedDevices
+
         );
 
     });
-
 
 
 
@@ -924,97 +1426,109 @@ async (automationId) => {
     // ================= TEMPERATURE ====================
     // ==================================================
 
-    socket.on("changeTemperature", async (data) => {
+    socket.on(
+    "changeTemperature",
 
-        const {
-            deviceName,
-            value
-        } = data;
-
+    async (data) => {
 
         const device =
-            await Device.findOne({
+        await Device.findOne({
 
-                name: deviceName,
+            name:
+            data.deviceName,
 
-                userId: socket.userId
+            userId:
+            socket.userId
 
-            });
+        });
+
 
 
         if (device) {
 
-            device.temperature = value;
+            device.temperature =
+            data.value;
 
             await device.save();
 
         }
 
 
+
         const updatedDevices =
-            await Device.find({
+        await Device.find({
 
-                userId: socket.userId
+            userId:
+            socket.userId
 
-            });
+        });
+
 
 
         socket.emit(
+
             "updateDevices",
+
             updatedDevices
+
         );
 
     });
 
 
 
-
     // ==================================================
-    // ================= TV VOLUME ======================
+    // ================= VOLUME =========================
     // ==================================================
 
-    socket.on("changeVolume", async (data) => {
+    socket.on(
+    "changeVolume",
 
-        const {
-            deviceName,
-            value
-        } = data;
-
+    async (data) => {
 
         const device =
-            await Device.findOne({
+        await Device.findOne({
 
-                name: deviceName,
+            name:
+            data.deviceName,
 
-                userId: socket.userId
+            userId:
+            socket.userId
 
-            });
+        });
+
 
 
         if (device) {
 
-            device.volume = value;
+            device.volume =
+            data.value;
 
             await device.save();
 
         }
 
 
+
         const updatedDevices =
-            await Device.find({
+        await Device.find({
 
-                userId: socket.userId
+            userId:
+            socket.userId
 
-            });
+        });
+
 
 
         socket.emit(
+
             "updateDevices",
+
             updatedDevices
+
         );
 
     });
-
 
 
 
@@ -1022,49 +1536,54 @@ async (automationId) => {
     // ================= DISCONNECT =====================
     // ==================================================
 
-    socket.on("disconnect", () => {
+    socket.on(
+    "disconnect",
 
-        console.log("User disconnected");
+    () => {
+
+        console.log(
+            "User disconnected"
+        );
 
     });
-  const logs =
-await Log.find({
-
-    userId: socket.userId
-
-})
-.sort({ _id: -1 })
-.limit(10);
-
-socket.emit(
-   "updateLogs",
-   logs
-);  
 
 });
 
 
-setInterval(async () => {
 
-    // CURRENT TIME
+// ======================================================
+// ================= AUTOMATION ENGINE ==================
+// ======================================================
 
-    const now = new Date();
+setInterval(
 
-    const hours =
+async () => {
+
+    try {
+
+        const now =
+        new Date();
+
+
+
+        const hours =
         String(now.getHours())
         .padStart(2, "0");
 
-    const minutes =
+
+
+        const minutes =
         String(now.getMinutes())
         .padStart(2, "0");
 
-    const currentTime =
+
+
+        const currentTime =
         `${hours}:${minutes}`;
 
 
-    // FIND MATCHING RULES
 
-    const automations =
+        const automations =
         await Automation.find({
 
             time: currentTime
@@ -1072,58 +1591,112 @@ setInterval(async () => {
         });
 
 
-    // EXECUTE RULES
 
-    for (const rule of automations) {
+        for (const rule of automations) {
 
-        const device =
+            const device =
             await Device.findOne({
 
-                name: rule.deviceName,
+                name:
+                rule.deviceName,
 
-                room: rule.room,
+                room:
+                rule.room,
 
-                userId: rule.userId
+                userId:
+                rule.userId
 
             });
 
 
-        if (device) {
 
-            device.status =
+            if (device) {
+
+                device.status =
                 rule.action;
 
-            await device.save();
 
-            const updatedDevices =
-await Device.find({
 
-});
+                await device.save();
 
-io.emit(
-   "updateDevices",
-   updatedDevices
-);
+
+
+                await Log.create({
+
+                    action:
+                    `Automation turned ${rule.action}`,
+
+                    device:
+                    device.name,
+
+                    room:
+                    device.room,
+
+                    time:
+                    new Date()
+                    .toLocaleString(),
+
+                    userId:
+                    rule.userId
+
+                });
+
+
+
+                const updatedDevices =
+                await Device.find({
+
+                    userId:
+                    rule.userId
+
+                });
+
+
+
+                io.emit(
+
+                    "updateDevices",
+
+                    updatedDevices
+
+                );
+
+            }
 
         }
 
     }
 
-}, 60000);
+    catch (err) {
+
+        console.log(err);
+
+    }
+
+},
+
+60000
+
+);
+
+
 
 // ======================================================
 // ================= START SERVER =======================
 // ======================================================
 
-const PORT =
-    process.env.PORT || 3000;
+server.listen(
 
+PORT,
 
-server.listen(PORT, () => {
+() => {
 
     console.log(
+
         `Server running on port ${PORT}`
+
     );
 
-});
+}
 
+);

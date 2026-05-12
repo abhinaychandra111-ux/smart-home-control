@@ -1,50 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-    <title>Register</title>
+    <meta charset="UTF-8">
 
     <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+          content="width=device-width,
+                   initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+    <title>SmartHome Register</title>
+
+    <link rel="stylesheet"
+          href="style.css">
+
+
+    <!-- GOOGLE FONT -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
 
 </head>
 
 <body class="auth-body">
 
-<div class="auth-box">
 
-    <h2>Create Account</h2>
+<div class="auth-box fade-in">
 
 
-    <!-- USERNAME -->
+    <!-- ================= LOGO ================= -->
+
+    <h1 class="logo">
+
+        ⚡ SmartHome
+
+    </h1>
+
+
+
+    <!-- ================= TITLE ================= -->
+
+    <h2>
+
+        Create Account
+
+    </h2>
+
+    <p class="auth-subtitle">
+
+        Build your smart-home experience
+
+    </p>
+
+
+
+    <!-- ================= USERNAME ================= -->
 
     <input type="text"
            id="username"
-           placeholder="Username">
+           placeholder="Enter Username">
 
 
-    <!-- PASSWORD -->
+
+    <!-- ================= PASSWORD ================= -->
 
     <div class="password-box">
 
         <input type="password"
                id="password"
-               placeholder="Password">
+               placeholder="Enter Password">
 
         <span onclick="togglePassword('password')"
               class="eye-btn">
 
-              👁
+            👁
 
         </span>
 
     </div>
 
 
-    <!-- CONFIRM PASSWORD -->
+
+    <!-- ================= CONFIRM PASSWORD ================= -->
 
     <div class="password-box">
 
@@ -55,37 +99,48 @@
         <span onclick="togglePassword('confirmPassword')"
               class="eye-btn">
 
-              👁
+            👁
 
         </span>
 
     </div>
 
 
-    <!-- PASSWORD STRENGTH -->
 
-    <p id="strength"></p>
+    <!-- ================= PASSWORD STRENGTH ================= -->
+
+    <p id="strength"
+       class="strength-text">
+
+    </p>
 
 
-    <!-- REGISTER BUTTON -->
 
-    <button onclick="register()">
+    <!-- ================= MESSAGE ================= -->
+
+    <p id="message"
+       class="error-text">
+
+    </p>
+
+
+
+    <!-- ================= REGISTER BUTTON ================= -->
+
+    <button id="registerBtn"
+            onclick="register()">
 
         Register
 
     </button>
 
 
-    <!-- MESSAGE -->
 
-    <p id="message"></p>
+    <!-- ================= LOGIN LINK ================= -->
 
+    <p class="bottom-text">
 
-    <!-- LOGIN LINK -->
-
-    <p>
-
-        Already have account?
+        Already have an account?
 
         <a href="/login.html">
 
@@ -98,7 +153,24 @@
 </div>
 
 
+
 <script>
+
+// ================= ENTER KEY =================
+
+document.addEventListener(
+"keypress",
+function(event) {
+
+    if (event.key === "Enter") {
+
+        register();
+
+    }
+
+});
+
+
 
 // ================= SHOW/HIDE PASSWORD =================
 
@@ -107,11 +179,17 @@ function togglePassword(id) {
     const field =
         document.getElementById(id);
 
+
     field.type =
+
         field.type === "password"
+
         ? "text"
+
         : "password";
+
 }
+
 
 
 // ================= PASSWORD STRENGTH =================
@@ -119,11 +197,26 @@ function togglePassword(id) {
 function checkStrength(password) {
 
     const strength =
-        document.getElementById("strength");
+        document.getElementById(
+            "strength"
+        );
 
 
     const strongRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+
+
+    // EMPTY
+
+    if (!password) {
+
+        strength.innerText = "";
+
+        return;
+
+    }
+
 
 
     // WEAK
@@ -133,18 +226,28 @@ function checkStrength(password) {
         strength.innerText =
             "Weak Password";
 
-        strength.style.color = "red";
+        strength.style.color =
+            "#ff5d5d";
+
     }
+
+
 
     // STRONG
 
-    else if (strongRegex.test(password)) {
+    else if (
+        strongRegex.test(password)
+    ) {
 
         strength.innerText =
             "Strong Password";
 
-        strength.style.color = "lime";
+        strength.style.color =
+            "#00ff88";
+
     }
+
+
 
     // MEDIUM
 
@@ -153,81 +256,234 @@ function checkStrength(password) {
         strength.innerText =
             "Medium Password";
 
-        strength.style.color = "orange";
+        strength.style.color =
+            "#ffaa33";
+
     }
+
 }
+
 
 
 // ================= LIVE PASSWORD CHECK =================
 
 document.getElementById("password")
-.addEventListener("input", function() {
+.addEventListener("input",
+
+function() {
 
     checkStrength(this.value);
 
 });
 
 
-// ================= REGISTER FUNCTION =================
+
+// ================= REGISTER =================
 
 async function register() {
 
     const username =
-        document.getElementById("username").value;
+        document.getElementById(
+            "username"
+        ).value.trim();
+
 
     const password =
-        document.getElementById("password").value;
+        document.getElementById(
+            "password"
+        ).value.trim();
+
 
     const confirmPassword =
-        document.getElementById("confirmPassword").value;
+        document.getElementById(
+            "confirmPassword"
+        ).value.trim();
+
 
     const message =
-        document.getElementById("message");
+        document.getElementById(
+            "message"
+        );
+
+
+    const registerBtn =
+        document.getElementById(
+            "registerBtn"
+        );
+
+
+
+    // CLEAR MESSAGE
+
+    message.innerText = "";
+
 
 
     // EMPTY VALIDATION
 
-    if (!username || !password) {
+    if (
+        !username ||
+        !password ||
+        !confirmPassword
+    ) {
+
+        message.style.color =
+            "#ff5d5d";
 
         message.innerText =
-            "Username and Password required";
+            "Fill all fields";
 
         return;
+
     }
 
 
-    // PASSWORD MATCH CHECK
+
+    // USERNAME LENGTH
+
+    if (username.length < 3) {
+
+        message.style.color =
+            "#ff5d5d";
+
+        message.innerText =
+            "Username too short";
+
+        return;
+
+    }
+
+
+
+    // NO SPACES
+
+    if (username.includes(" ")) {
+
+        message.style.color =
+            "#ff5d5d";
+
+        message.innerText =
+            "Username cannot contain spaces";
+
+        return;
+
+    }
+
+
+
+    // PASSWORD MATCH
 
     if (password !== confirmPassword) {
+
+        message.style.color =
+            "#ff5d5d";
 
         message.innerText =
             "Passwords do not match";
 
         return;
+
     }
 
 
-    // SEND REGISTER REQUEST
 
-    const res = await fetch("/register", {
+    // LOADING
 
-        method: "POST",
+    registerBtn.innerText =
+        "Creating Account...";
 
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            username,
-            password
-        })
-
-    });
+    registerBtn.disabled = true;
 
 
-    const data = await res.json();
 
-    message.innerText = data.message;
+    try {
+
+        const res =
+            await fetch("/register", {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type":
+                    "application/json"
+
+                },
+
+                body: JSON.stringify({
+
+                    username,
+
+                    password
+
+                })
+
+            });
+
+
+        const data =
+            await res.json();
+
+
+
+        // SUCCESS
+
+        if (
+            data.message ===
+            "User registered successfully"
+        ) {
+
+            message.style.color =
+                "#00ff88";
+
+            message.innerText =
+                "Registration successful";
+
+
+            setTimeout(() => {
+
+                window.location.href =
+                    "/login.html";
+
+            }, 1500);
+
+        }
+
+
+
+        // ERROR
+
+        else {
+
+            message.style.color =
+                "#ff5d5d";
+
+            message.innerText =
+                data.message;
+
+        }
+
+    }
+
+    catch (err) {
+
+        message.style.color =
+            "#ff5d5d";
+
+        message.innerText =
+            "Server error";
+
+    }
+
+
+
+    // RESET BUTTON
+
+    registerBtn.innerText =
+        "Register";
+
+    registerBtn.disabled = false;
+
 }
 
 </script>

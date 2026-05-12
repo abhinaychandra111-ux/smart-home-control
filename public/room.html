@@ -6,12 +6,14 @@
     <meta charset="UTF-8">
 
     <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+          content="width=device-width,
+                   initial-scale=1.0">
 
     <title>Room Devices</title>
 
     <link rel="stylesheet"
           href="style.css">
+
 
     <!-- GOOGLE FONT -->
 
@@ -25,6 +27,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
           rel="stylesheet">
 
+
     <!-- FONT AWESOME -->
 
     <link rel="stylesheet"
@@ -33,6 +36,7 @@
 </head>
 
 <body>
+
 
 <div class="layout">
 
@@ -63,15 +67,9 @@
 
                 </a>
 
-                <a>
+                <a onclick="openAutomation()">
 
-                    📊 Analytics
-
-                </a>
-
-                <a>
-
-                    ⚙ Settings
+                    🤖 Automations
 
                 </a>
 
@@ -110,16 +108,15 @@
 
                 <p>
 
-                    Manage smart devices in this room
+                    Manage smart devices
 
                 </p>
 
             </div>
 
-
             <div class="top-right">
 
-                💡
+                ⚡
 
             </div>
 
@@ -181,6 +178,7 @@
                    id="newDevice"
                    placeholder="Device Name">
 
+
             <select id="deviceType">
 
                 <option value="light">
@@ -209,6 +207,7 @@
 
             </select>
 
+
             <button onclick="addDevice()">
 
                 Add Device
@@ -219,7 +218,7 @@
 
 
 
-        <!-- ================= DEVICE GRID ================= -->
+        <!-- ================= DEVICES ================= -->
 
         <div id="deviceContainer"
              class="room-grid">
@@ -240,29 +239,33 @@
 
 <script>
 
-// ================= AUTH CHECK =================
+// ================= AUTH =================
 
 if (!localStorage.getItem("token")) {
 
-    window.location.href = "/login.html";
+    window.location.href =
+        "/login.html";
+
 }
 
 
 
-// ================= ROOM PARAM =================
+// ================= ROOM =================
 
 const params =
-    new URLSearchParams(window.location.search);
+new URLSearchParams(
+    window.location.search
+);
 
 const selectedRoom =
-    params.get("room");
+params.get("room");
 
 
 
-// ================= ROOM TITLE =================
-
-document.getElementById("roomTitle").innerText =
-    selectedRoom;
+document.getElementById(
+"roomTitle"
+).innerText =
+selectedRoom;
 
 
 
@@ -272,7 +275,10 @@ const socket = io({
 
     auth: {
 
-        token: localStorage.getItem("token")
+        token:
+        localStorage.getItem(
+            "token"
+        )
 
     }
 
@@ -280,13 +286,16 @@ const socket = io({
 
 
 
-// ================= INVALID TOKEN =================
+// ================= TOKEN ERROR =================
 
 socket.on("connect_error", () => {
 
-    localStorage.removeItem("token");
+    localStorage.removeItem(
+        "token"
+    );
 
-    window.location.href = "/login.html";
+    window.location.href =
+        "/login.html";
 
 });
 
@@ -296,16 +305,60 @@ socket.on("connect_error", () => {
 
 socket.on("updateDevices", (devices) => {
 
+    renderDevices(devices);
+
+});
+
+
+
+// ================= RENDER DEVICES =================
+
+function renderDevices(devices) {
+
     const container =
-        document.getElementById("deviceContainer");
+    document.getElementById(
+        "deviceContainer"
+    );
 
     container.innerHTML = "";
 
 
+
     const roomDevices =
-        devices.filter(device =>
-            device.room === selectedRoom
-        );
+    devices.filter(device =>
+
+        device.room === selectedRoom
+
+    );
+
+
+
+    // ================= EMPTY STATE =================
+
+    if (roomDevices.length === 0) {
+
+        container.innerHTML = `
+
+            <div class="room-card
+                        glass-card fade-in">
+
+                <h2>
+
+                    No Devices
+
+                </h2>
+
+                <p>
+
+                    Add your first device
+
+                </p>
+
+            </div>
+
+        `;
+
+    }
 
 
 
@@ -316,6 +369,7 @@ socket.on("updateDevices", (devices) => {
     let onCount = 0;
 
     let offCount = 0;
+
 
 
     roomDevices.forEach(device => {
@@ -335,14 +389,20 @@ socket.on("updateDevices", (devices) => {
     });
 
 
-    document.getElementById("totalDevices").innerText =
-        total;
 
-    document.getElementById("onDevices").innerText =
-        onCount;
+    document.getElementById(
+        "totalDevices"
+    ).innerText = total;
 
-    document.getElementById("offDevices").innerText =
-        offCount;
+
+    document.getElementById(
+        "onDevices"
+    ).innerText = onCount;
+
+
+    document.getElementById(
+        "offDevices"
+    ).innerText = offCount;
 
 
 
@@ -377,20 +437,21 @@ socket.on("updateDevices", (devices) => {
                     <input type="range"
                            min="0"
                            max="100"
-                           value="${device.brightness}"
+                           value="${device.brightness || 50}"
                            onchange="changeBrightness(
                            '${device.name}',
                            this.value)">
 
                     <p>
 
-                        ${device.brightness}%
+                        ${device.brightness || 50}%
 
                     </p>
 
                 </div>
 
             `;
+
         }
 
 
@@ -412,33 +473,30 @@ socket.on("updateDevices", (devices) => {
                     </label>
 
                     <select onchange="changeSpeed(
-                            '${device.name}',
-                            this.value)">
+                    '${device.name}',
+                    this.value)">
 
                         <option
                         ${device.speed === "Low"
-                            ? "selected"
-                            : ""}>
+                        ? "selected" : ""}>
 
-                            Low
+                        Low
 
                         </option>
 
                         <option
                         ${device.speed === "Medium"
-                            ? "selected"
-                            : ""}>
+                        ? "selected" : ""}>
 
-                            Medium
+                        Medium
 
                         </option>
 
                         <option
                         ${device.speed === "High"
-                            ? "selected"
-                            : ""}>
+                        ? "selected" : ""}>
 
-                            High
+                        High
 
                         </option>
 
@@ -447,6 +505,7 @@ socket.on("updateDevices", (devices) => {
                 </div>
 
             `;
+
         }
 
 
@@ -470,20 +529,21 @@ socket.on("updateDevices", (devices) => {
                     <input type="range"
                            min="16"
                            max="30"
-                           value="${device.temperature}"
+                           value="${device.temperature || 24}"
                            onchange="changeTemperature(
                            '${device.name}',
                            this.value)">
 
                     <p>
 
-                        ${device.temperature}°C
+                        ${device.temperature || 24}°C
 
                     </p>
 
                 </div>
 
             `;
+
         }
 
 
@@ -507,34 +567,37 @@ socket.on("updateDevices", (devices) => {
                     <input type="range"
                            min="0"
                            max="100"
-                           value="${device.volume}"
+                           value="${device.volume || 50}"
                            onchange="changeVolume(
                            '${device.name}',
                            this.value)">
 
                     <p>
 
-                        ${device.volume}%
+                        ${device.volume || 50}%
 
                     </p>
 
                 </div>
 
             `;
+
         }
 
 
 
         const checked =
-            device.status === "ON"
-            ? "checked"
-            : "";
+        device.status === "ON"
+        ? "checked"
+        : "";
 
 
 
         container.innerHTML += `
 
-            <div class="room-card glass-card fade-in">
+            <div class="room-card
+                        glass-card
+                        fade-in">
 
                 <div class="room-icon">
 
@@ -558,6 +621,14 @@ socket.on("updateDevices", (devices) => {
 
                 </p>
 
+                <p>
+
+                    Energy:
+                    ${(device.totalEnergy || 0)
+                    .toFixed(2)} kWh
+
+                </p>
+
 
 
                 <!-- TOGGLE -->
@@ -570,9 +641,12 @@ socket.on("updateDevices", (devices) => {
 
                                ${checked}
 
-                               onchange="toggleDevice('${device.name}')">
+                               onchange="toggleDevice(
+                               '${device.name}')">
 
-                        <span class="slider"></span>
+                        <span class="slider">
+
+                        </span>
 
                     </label>
 
@@ -580,15 +654,19 @@ socket.on("updateDevices", (devices) => {
 
 
 
-                <!-- DEVICE CONTROLS -->
+                <!-- CONTROLS -->
 
                 ${controls}
 
                 <br>
 
+
+
                 <!-- DELETE -->
 
-                <button onclick="deleteDevice('${device.name}')">
+                <button class="delete-room-btn"
+                        onclick="deleteDevice(
+                        '${device.name}')">
 
                     Delete Device
 
@@ -600,7 +678,7 @@ socket.on("updateDevices", (devices) => {
 
     });
 
-});
+}
 
 
 
@@ -609,13 +687,26 @@ socket.on("updateDevices", (devices) => {
 function addDevice() {
 
     const name =
-        document.getElementById("newDevice").value;
+    document.getElementById(
+        "newDevice"
+    ).value.trim();
+
 
     const type =
-        document.getElementById("deviceType").value;
+    document.getElementById(
+        "deviceType"
+    ).value;
 
 
-    if (!name) return;
+
+    if (!name) {
+
+        alert("Enter device name");
+
+        return;
+
+    }
+
 
 
     socket.emit("addDevice", {
@@ -629,27 +720,45 @@ function addDevice() {
     });
 
 
-    document.getElementById("newDevice").value = "";
+
+    document.getElementById(
+        "newDevice"
+    ).value = "";
 
 }
 
 
 
-// ================= TOGGLE DEVICE =================
+// ================= TOGGLE =================
 
 function toggleDevice(device) {
 
-    socket.emit("toggleDevice", device);
+    socket.emit(
+        "toggleDevice",
+        device
+    );
 
 }
 
 
 
-// ================= DELETE DEVICE =================
+// ================= DELETE =================
 
 function deleteDevice(device) {
 
-    socket.emit("deleteDevice", device);
+    const confirmDelete =
+    confirm(
+        `Delete ${device}?`
+    );
+
+    if (!confirmDelete)
+        return;
+
+
+    socket.emit(
+        "deleteDevice",
+        device
+    );
 
 }
 
@@ -657,31 +766,49 @@ function deleteDevice(device) {
 
 // ================= BRIGHTNESS =================
 
-function changeBrightness(deviceName, value) {
+function changeBrightness(
+deviceName,
+value
+) {
 
-    socket.emit("changeBrightness", {
+    socket.emit(
 
-        deviceName,
+        "changeBrightness",
 
-        value
+        {
 
-    });
+            deviceName,
+
+            value
+
+        }
+
+    );
 
 }
 
 
 
-// ================= FAN SPEED =================
+// ================= SPEED =================
 
-function changeSpeed(deviceName, value) {
+function changeSpeed(
+deviceName,
+value
+) {
 
-    socket.emit("changeSpeed", {
+    socket.emit(
 
-        deviceName,
+        "changeSpeed",
 
-        value
+        {
 
-    });
+            deviceName,
+
+            value
+
+        }
+
+    );
 
 }
 
@@ -689,41 +816,71 @@ function changeSpeed(deviceName, value) {
 
 // ================= TEMPERATURE =================
 
-function changeTemperature(deviceName, value) {
+function changeTemperature(
+deviceName,
+value
+) {
 
-    socket.emit("changeTemperature", {
+    socket.emit(
 
-        deviceName,
+        "changeTemperature",
 
-        value
+        {
 
-    });
+            deviceName,
 
-}
+            value
 
+        }
 
-
-// ================= TV VOLUME =================
-
-function changeVolume(deviceName, value) {
-
-    socket.emit("changeVolume", {
-
-        deviceName,
-
-        value
-
-    });
+    );
 
 }
 
 
 
-// ================= BACK =================
+// ================= VOLUME =================
+
+function changeVolume(
+deviceName,
+value
+) {
+
+    socket.emit(
+
+        "changeVolume",
+
+        {
+
+            deviceName,
+
+            value
+
+        }
+
+    );
+
+}
+
+
+
+// ================= DASHBOARD =================
 
 function goBack() {
 
-    window.location.href = "/";
+    window.location.href =
+        "/";
+
+}
+
+
+
+// ================= AUTOMATION =================
+
+function openAutomation() {
+
+    window.location.href =
+        "/automation.html";
 
 }
 
@@ -733,9 +890,12 @@ function goBack() {
 
 function logout() {
 
-    localStorage.removeItem("token");
+    localStorage.removeItem(
+        "token"
+    );
 
-    window.location.href = "/login.html";
+    window.location.href =
+        "/login.html";
 
 }
 
