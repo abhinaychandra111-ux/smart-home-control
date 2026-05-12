@@ -279,7 +279,7 @@ socket.on("updateDevices", (devices) => {
     allDevices = devices;
 
     renderRooms();
-
+renderEnergy(devices);
 });
 
 
@@ -626,6 +626,55 @@ function renderLogs(logs) {
     });
 
 }
+
+
+function renderEnergy(devices) {
+
+    const container =
+    document.getElementById(
+        "energyContainer"
+    );
+
+    container.innerHTML = "";
+
+
+    devices.forEach(device => {
+
+        container.innerHTML += `
+
+            <div class="activity-item">
+
+                <div>
+
+                    <strong>
+
+                        ${device.name}
+
+                    </strong>
+
+                    <p>
+
+                        ${device.room}
+
+                    </p>
+
+                </div>
+
+                <span>
+
+                    ${device.totalEnergy
+                    .toFixed(2)} kWh
+
+                </span>
+
+            </div>
+
+        `;
+
+    });
+
+}
+
 <div class="glass-card
             activity-box fade-in">
 
@@ -634,6 +683,8 @@ function renderLogs(logs) {
         Recent Activity
 
     </h2>
+
+    <h2>Energy Usage</h2>
 
     <div id="activityContainer">
 

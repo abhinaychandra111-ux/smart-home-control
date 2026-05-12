@@ -127,6 +127,13 @@ const deviceSchema = new mongoose.Schema({
         default: 50
 
     },
+power: {
+
+    type: Number,
+
+    default: 0
+
+},
 
     userId: mongoose.Schema.Types.ObjectId
 
@@ -468,6 +475,8 @@ io.on("connection", async (socket) => {
             await device.save();
 
         }
+        device.lastOnTime =
+    new Date();
 
        await Log.create({
 
@@ -485,7 +494,12 @@ io.on("connection", async (socket) => {
     userId: socket.userId
 
 }); 
+const now =
+    new Date();
 
+const hoursUsed =
+    (now - device.lastOnTime)
+    / (1000 * 60 * 60);
         const updatedDevices =
             await Device.find({
 
@@ -502,7 +516,10 @@ io.on("connection", async (socket) => {
     });
 
 
+const energyUsed =
 
+(device.power * hoursUsed)
+/ 1000;
 
     // ==================================================
     // ================= ADD DEVICE =====================
@@ -531,6 +548,31 @@ io.on("connection", async (socket) => {
 
             });
 
+let power = 0;
+
+if (type === "light") {
+
+    power = 10;
+
+}
+
+if (type === "fan") {
+
+    power = 70;
+
+}
+
+if (type === "ac") {
+
+    power = 1500;
+
+}
+
+if (type === "tv") {
+
+    power = 120;
+
+}
 
         if (!exists) {
 
@@ -541,6 +583,8 @@ io.on("connection", async (socket) => {
                 type,
 
                 room,
+
+                power,
 
                 status: "OFF",
 
