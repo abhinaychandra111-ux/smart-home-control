@@ -3,15 +3,10 @@
 // ======================================================
 
 const express = require("express");
-
 const http = require("http");
-
 const { Server } = require("socket.io");
-
 const mongoose = require("mongoose");
-
 const bcrypt = require("bcryptjs");
-
 const jwt = require("jsonwebtoken");
 
 
@@ -20,49 +15,25 @@ const jwt = require("jsonwebtoken");
 // ================= CONFIG =============================
 // ======================================================
 
-const JWT_SECRET =
-"mysupersecretkey";
-
-const PORT =
-process.env.PORT || 3000;
-
-
-
-// ======================================================
-// ================= EXPRESS APP ========================
-// ======================================================
-
 const app = express();
+
+const server = http.createServer(app);
+
+const io = new Server(server);
+
+const PORT = process.env.PORT || 3000;
+
+const JWT_SECRET = "mysupersecretkey";
+
+
+
+// ======================================================
+// ================= MIDDLEWARE =========================
+// ======================================================
 
 app.use(express.json());
 
 app.use(express.static("public"));
-
-
-
-// ======================================================
-// ================= HTTP SERVER ========================
-// ======================================================
-
-const server =
-http.createServer(app);
-
-
-
-// ======================================================
-// ================= SOCKET.IO ==========================
-// ======================================================
-
-const io =
-new Server(server, {
-
-    cors: {
-
-        origin: "*"
-
-    }
-
-});
 
 
 
@@ -80,18 +51,13 @@ mongoose.connect(
 
 .then(() => {
 
-    console.log(
-        "MongoDB Connected"
-    );
+    console.log("MongoDB Connected");
 
 })
 
 .catch((err) => {
 
-    console.log(
-        "MongoDB Error:",
-        err
-    );
+    console.log("MongoDB Error:", err);
 
 });
 
@@ -101,8 +67,7 @@ mongoose.connect(
 // ================= USER SCHEMA ========================
 // ======================================================
 
-const userSchema =
-new mongoose.Schema({
+const userSchema = new mongoose.Schema({
 
     username: String,
 
@@ -113,15 +78,34 @@ new mongoose.Schema({
 
 
 // ======================================================
-// ================= DEVICE SCHEMA ======================
+// ================= ROOM SCHEMA ========================
 // ======================================================
 
-const deviceSchema =
-new mongoose.Schema({
+const roomSchema = new mongoose.Schema({
 
     name: String,
 
-    status: String,
+    userId: mongoose.Schema.Types.ObjectId
+
+});
+
+
+
+// ======================================================
+// ================= DEVICE SCHEMA ======================
+// ======================================================
+
+const deviceSchema = new mongoose.Schema({
+
+    name: String,
+
+    status: {
+
+        type: String,
+
+        default: "OFF"
+
+    },
 
     type: String,
 
@@ -201,30 +185,13 @@ new mongoose.Schema({
 
 
 
-    // LAST ON TIME
+    // LAST ACTIVE
 
     lastOnTime: Date,
 
 
 
-    userId:
-    mongoose.Schema.Types.ObjectId
-
-});
-
-
-
-// ======================================================
-// ================= ROOM SCHEMA ========================
-// ======================================================
-
-const roomSchema =
-new mongoose.Schema({
-
-    name: String,
-
-    userId:
-    mongoose.Schema.Types.ObjectId
+    userId: mongoose.Schema.Types.ObjectId
 
 });
 
@@ -234,8 +201,7 @@ new mongoose.Schema({
 // ================= AUTOMATION SCHEMA ==================
 // ======================================================
 
-const automationSchema =
-new mongoose.Schema({
+const automationSchema = new mongoose.Schema({
 
     room: String,
 
@@ -245,8 +211,7 @@ new mongoose.Schema({
 
     time: String,
 
-    userId:
-    mongoose.Schema.Types.ObjectId
+    userId: mongoose.Schema.Types.ObjectId
 
 });
 
@@ -256,8 +221,7 @@ new mongoose.Schema({
 // ================= LOG SCHEMA =========================
 // ======================================================
 
-const logSchema =
-new mongoose.Schema({
+const logSchema = new mongoose.Schema({
 
     action: String,
 
@@ -267,8 +231,7 @@ new mongoose.Schema({
 
     time: String,
 
-    userId:
-    mongoose.Schema.Types.ObjectId
+    userId: mongoose.Schema.Types.ObjectId
 
 });
 
@@ -278,34 +241,44 @@ new mongoose.Schema({
 // ================= MODELS =============================
 // ======================================================
 
-const User =
-mongoose.model(
+const User = mongoose.model(
+
     "User",
+
     userSchema
+
 );
 
-const Device =
-mongoose.model(
-    "Device",
-    deviceSchema
-);
+const Room = mongoose.model(
 
-const Room =
-mongoose.model(
     "Room",
+
     roomSchema
+
 );
 
-const Automation =
-mongoose.model(
+const Device = mongoose.model(
+
+    "Device",
+
+    deviceSchema
+
+);
+
+const Automation = mongoose.model(
+
     "Automation",
+
     automationSchema
+
 );
 
-const Log =
-mongoose.model(
+const Log = mongoose.model(
+
     "Log",
+
     logSchema
+
 );
 
 
@@ -315,6 +288,7 @@ mongoose.model(
 // ======================================================
 
 app.post(
+
 "/register",
 
 async (req, res) => {
@@ -322,18 +296,16 @@ async (req, res) => {
     try {
 
         const {
+
             username,
+
             password
+
         } = req.body;
 
 
 
-        // EMPTY
-
-        if (
-            !username ||
-            !password
-        ) {
+        if (!username || !password) {
 
             return res.json({
 
@@ -346,26 +318,23 @@ async (req, res) => {
 
 
 
-        // PASSWORD
-
         const strongRegex =
-/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
 
 
-       if (!strongRegex.test(password)) {
+        if (!strongRegex.test(password)) {
 
-    return res.json({
+            return res.json({
 
-        message: "Weak password"
+                message:
+                "Weak password"
 
-    });
+            });
 
-}
+        }
 
 
-
-        // USER EXISTS
 
         const exists =
         await User.findOne({
@@ -373,6 +342,7 @@ async (req, res) => {
             username
 
         });
+
 
 
         if (exists) {
@@ -388,17 +358,16 @@ async (req, res) => {
 
 
 
-        // HASH PASSWORD
-
         const hashedPassword =
         await bcrypt.hash(
+
             password,
+
             10
+
         );
 
 
-
-        // CREATE USER
 
         await User.create({
 
@@ -442,6 +411,7 @@ async (req, res) => {
 // ======================================================
 
 app.post(
+
 "/login",
 
 async (req, res) => {
@@ -449,8 +419,11 @@ async (req, res) => {
     try {
 
         const {
+
             username,
+
             password
+
         } = req.body;
 
 
@@ -563,9 +536,11 @@ io.use((socket, next) => {
     if (!token) {
 
         return next(
+
             new Error(
                 "Authentication error"
             )
+
         );
 
     }
@@ -584,8 +559,10 @@ io.use((socket, next) => {
         );
 
 
+
         socket.userId =
         decoded.userId;
+
 
 
         next();
@@ -595,9 +572,11 @@ io.use((socket, next) => {
     catch (err) {
 
         next(
+
             new Error(
                 "Authentication error"
             )
+
         );
 
     }
@@ -611,12 +590,23 @@ io.use((socket, next) => {
 // ======================================================
 
 io.on(
+
 "connection",
 
 async (socket) => {
 
-    console.log(
-        "User connected"
+    console.log("User connected");
+
+
+
+    // ==================================================
+    // ================= USER ROOM ======================
+    // ==================================================
+
+    socket.join(
+
+        socket.userId.toString()
+
     );
 
 
@@ -633,6 +623,7 @@ async (socket) => {
     });
 
 
+
     const rooms =
     await Room.find({
 
@@ -641,12 +632,14 @@ async (socket) => {
     });
 
 
+
     const automations =
     await Automation.find({
 
         userId: socket.userId
 
     });
+
 
 
     const logs =
@@ -663,23 +656,41 @@ async (socket) => {
 
 
     socket.emit(
+
         "updateDevices",
+
         devices
+
     );
 
+
+
     socket.emit(
+
         "updateRooms",
+
         rooms
+
     );
 
+
+
     socket.emit(
+
         "updateAutomations",
+
         automations
+
     );
 
+
+
     socket.emit(
+
         "updateLogs",
+
         logs
+
     );
 
 
@@ -689,6 +700,7 @@ async (socket) => {
     // ==================================================
 
     socket.on(
+
     "addRoom",
 
     async (roomName) => {
@@ -757,11 +769,13 @@ async (socket) => {
 
 
 
+
     // ==================================================
     // ================= DELETE ROOM ====================
     // ==================================================
 
     socket.on(
+
     "deleteRoom",
 
     async (roomName) => {
@@ -782,27 +796,6 @@ async (socket) => {
             await Device.deleteMany({
 
                 room: roomName,
-
-                userId:
-                socket.userId
-
-            });
-
-
-
-            await Log.create({
-
-                action:
-                "Room deleted",
-
-                device:
-                "System",
-
-                room: roomName,
-
-                time:
-                new Date()
-                .toLocaleString(),
 
                 userId:
                 socket.userId
@@ -861,11 +854,13 @@ async (socket) => {
 
 
 
+
     // ==================================================
     // ================= ADD DEVICE =====================
     // ==================================================
 
     socket.on(
+
     "addDevice",
 
     async (data) => {
@@ -875,7 +870,9 @@ async (socket) => {
             const {
 
                 name,
+
                 type,
+
                 room
 
             } = data;
@@ -883,9 +880,13 @@ async (socket) => {
 
 
             if (
+
                 !name ||
+
                 !type ||
+
                 !room
+
             ) return;
 
 
@@ -894,6 +895,7 @@ async (socket) => {
             await Device.findOne({
 
                 name,
+
                 room,
 
                 userId:
@@ -975,11 +977,13 @@ async (socket) => {
 
 
 
+
     // ==================================================
     // ================= DELETE DEVICE ==================
     // ==================================================
 
     socket.on(
+
     "deleteDevice",
 
     async (deviceName) => {
@@ -1027,11 +1031,13 @@ async (socket) => {
 
 
 
+
     // ==================================================
     // ================= TOGGLE DEVICE ==================
     // ==================================================
 
     socket.on(
+
     "toggleDevice",
 
     async (deviceName) => {
@@ -1057,13 +1063,9 @@ async (socket) => {
 
             // TURN ON
 
-            if (
-                device.status ===
-                "OFF"
-            ) {
+            if (device.status === "OFF") {
 
-                device.status =
-                "ON";
+                device.status = "ON";
 
                 device.lastOnTime =
                 new Date();
@@ -1076,14 +1078,11 @@ async (socket) => {
 
             else {
 
-                device.status =
-                "OFF";
+                device.status = "OFF";
 
 
 
-                if (
-                    device.lastOnTime
-                ) {
+                if (device.lastOnTime) {
 
                     const now =
                     new Date();
@@ -1120,6 +1119,8 @@ async (socket) => {
             await device.save();
 
 
+
+            // LOG
 
             await Log.create({
 
@@ -1197,126 +1198,13 @@ async (socket) => {
 
 
 
-    // ==================================================
-    // ================= AUTOMATION =====================
-    // ==================================================
-
-    socket.on(
-    "addAutomation",
-
-    async (data) => {
-
-        try {
-
-            await Automation.create({
-
-                room:
-                data.room,
-
-                deviceName:
-                data.deviceName,
-
-                action:
-                data.action,
-
-                time:
-                data.time,
-
-                userId:
-                socket.userId
-
-            });
-
-
-
-            const automations =
-            await Automation.find({
-
-                userId:
-                socket.userId
-
-            });
-
-
-
-            socket.emit(
-
-                "updateAutomations",
-
-                automations
-
-            );
-
-        }
-
-        catch (err) {
-
-            console.log(err);
-
-        }
-
-    });
-
-
-
-    // ==================================================
-    // ================= DELETE AUTOMATION ==============
-    // ==================================================
-
-    socket.on(
-    "deleteAutomation",
-
-    async (automationId) => {
-
-        try {
-
-            await Automation.deleteOne({
-
-                _id:
-                automationId,
-
-                userId:
-                socket.userId
-
-            });
-
-
-
-            const automations =
-            await Automation.find({
-
-                userId:
-                socket.userId
-
-            });
-
-
-
-            socket.emit(
-
-                "updateAutomations",
-
-                automations
-
-            );
-
-        }
-
-        catch (err) {
-
-            console.log(err);
-
-        }
-
-    });
-
-
 
     // ==================================================
     // ================= BRIGHTNESS =====================
     // ==================================================
 
     socket.on(
+
     "changeBrightness",
 
     async (data) => {
@@ -1367,11 +1255,13 @@ async (socket) => {
 
 
 
+
     // ==================================================
-    // ================= SPEED ==========================
+    // ================= FAN SPEED ======================
     // ==================================================
 
     socket.on(
+
     "changeSpeed",
 
     async (data) => {
@@ -1422,11 +1312,13 @@ async (socket) => {
 
 
 
+
     // ==================================================
     // ================= TEMPERATURE ====================
     // ==================================================
 
     socket.on(
+
     "changeTemperature",
 
     async (data) => {
@@ -1477,11 +1369,13 @@ async (socket) => {
 
 
 
+
     // ==================================================
     // ================= VOLUME =========================
     // ==================================================
 
     socket.on(
+
     "changeVolume",
 
     async (data) => {
@@ -1532,11 +1426,183 @@ async (socket) => {
 
 
 
+
+    // ==================================================
+    // ================= ADD AUTOMATION =================
+    // ==================================================
+
+    socket.on(
+
+    "addAutomation",
+
+    async (data) => {
+
+        try {
+
+            const {
+
+                room,
+
+                deviceName,
+
+                action,
+
+                time
+
+            } = data;
+
+
+
+            if (
+
+                !room ||
+
+                !deviceName ||
+
+                !action ||
+
+                !time
+
+            ) {
+
+                return;
+
+            }
+
+
+
+            const exists =
+            await Automation.findOne({
+
+                room,
+
+                deviceName,
+
+                action,
+
+                time,
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            if (exists)
+                return;
+
+
+
+            await Automation.create({
+
+                room,
+
+                deviceName,
+
+                action,
+
+                time,
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            const automations =
+            await Automation.find({
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            socket.emit(
+
+                "updateAutomations",
+
+                automations
+
+            );
+
+        }
+
+        catch (err) {
+
+            console.log(err);
+
+        }
+
+    });
+
+
+
+
+    // ==================================================
+    // ================= DELETE AUTOMATION ==============
+    // ==================================================
+
+    socket.on(
+
+    "deleteAutomation",
+
+    async (automationId) => {
+
+        try {
+
+            await Automation.deleteOne({
+
+                _id:
+                automationId,
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            const automations =
+            await Automation.find({
+
+                userId:
+                socket.userId
+
+            });
+
+
+
+            socket.emit(
+
+                "updateAutomations",
+
+                automations
+
+            );
+
+        }
+
+        catch (err) {
+
+            console.log(err);
+
+        }
+
+    });
+
+
+
+
     // ==================================================
     // ================= DISCONNECT =====================
     // ==================================================
 
     socket.on(
+
     "disconnect",
 
     () => {
@@ -1583,6 +1649,13 @@ async () => {
 
 
 
+        console.log(
+            "Checking:",
+            currentTime
+        );
+
+
+
         const automations =
         await Automation.find({
 
@@ -1610,58 +1683,167 @@ async () => {
 
 
 
-            if (device) {
-
-                device.status =
-                rule.action;
+            if (!device)
+                continue;
 
 
 
-                await device.save();
+            // SAME STATE
+
+            if (
+
+                device.status ===
+                rule.action
+
+            ) continue;
 
 
 
-                await Log.create({
+            // TURN ON
 
-                    action:
-                    `Automation turned ${rule.action}`,
+            if (rule.action === "ON") {
 
-                    device:
-                    device.name,
-
-                    room:
-                    device.room,
-
-                    time:
-                    new Date()
-                    .toLocaleString(),
-
-                    userId:
-                    rule.userId
-
-                });
-
-
-
-                const updatedDevices =
-                await Device.find({
-
-                    userId:
-                    rule.userId
-
-                });
-
-
-
-                io.emit(
-
-                    "updateDevices",
-
-                    updatedDevices
-
-                );
+                device.lastOnTime =
+                new Date();
 
             }
+
+
+
+            // TURN OFF
+
+            if (
+
+                rule.action === "OFF" &&
+
+                device.lastOnTime
+
+            ) {
+
+                const now =
+                new Date();
+
+
+
+                const hoursUsed =
+
+                (now -
+                device.lastOnTime)
+
+                / (1000 * 60 * 60);
+
+
+
+                const energyUsed =
+
+                (device.power *
+                hoursUsed)
+
+                / 1000;
+
+
+
+                device.totalEnergy +=
+                energyUsed;
+
+            }
+
+
+
+            device.status =
+            rule.action;
+
+
+
+            await device.save();
+
+
+
+            // LOG
+
+            await Log.create({
+
+                action:
+                `Automation turned ${rule.action}`,
+
+                device:
+                device.name,
+
+                room:
+                device.room,
+
+                time:
+                new Date()
+                .toLocaleString(),
+
+                userId:
+                rule.userId
+
+            });
+
+
+
+            const updatedDevices =
+            await Device.find({
+
+                userId:
+                rule.userId
+
+            });
+
+
+
+            const logs =
+            await Log.find({
+
+                userId:
+                rule.userId
+
+            })
+
+            .sort({ _id: -1 })
+
+            .limit(10);
+
+
+
+            // REALTIME UPDATE
+
+            io.to(
+
+                rule.userId.toString()
+
+            )
+
+            .emit(
+
+                "updateDevices",
+
+                updatedDevices
+
+            );
+
+
+
+            io.to(
+
+                rule.userId.toString()
+
+            )
+
+            .emit(
+
+                "updateLogs",
+
+                logs
+
+            );
+
+
+
+            console.log(
+                "Automation executed"
+            );
 
         }
 
@@ -1669,13 +1851,16 @@ async () => {
 
     catch (err) {
 
-        console.log(err);
+        console.log(
+            "Automation error:",
+            err
+        );
 
     }
 
 },
 
-60000
+1000
 
 );
 
@@ -1693,7 +1878,7 @@ PORT,
 
     console.log(
 
-        `Server running on port ${PORT}`
+        `Server running at http://localhost:${PORT}`
 
     );
 
