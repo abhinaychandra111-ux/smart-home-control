@@ -581,6 +581,71 @@ function updateChart(onCount, offCount) {
     });
 
 }
+function renderLogs(logs) {
+
+    const container =
+      document.getElementById(
+      "activityContainer"
+    );
+
+    container.innerHTML = "";
+
+
+    logs.forEach(log => {
+
+        container.innerHTML += `
+
+            <div class="activity-item">
+
+                <div>
+
+                    <strong>
+
+                        ${log.device}
+
+                    </strong>
+
+                    <p>
+
+                        ${log.action}
+
+                    </p>
+
+                </div>
+
+                <span>
+
+                    ${log.time}
+
+                </span>
+
+            </div>
+
+        `;
+
+    });
+
+}
+<div class="glass-card
+            activity-box fade-in">
+
+    <h2>
+
+        Recent Activity
+
+    </h2>
+
+    <div id="activityContainer">
+
+    </div>
+
+</div>
+
+socket.on("updateLogs", (logs) => {
+
+    renderLogs(logs);
+
+});
 
 </script>
 

@@ -160,7 +160,21 @@ const automationSchema = new mongoose.Schema({
 
 });
 
+const logSchema =
+new mongoose.Schema({
 
+    action: String,
+
+    device: String,
+
+    room: String,
+
+    time: String,
+
+    userId:
+      mongoose.Schema.Types.ObjectId
+
+});
 
 // ======================================================
 // ================= MODELS =============================
@@ -179,6 +193,9 @@ const Automation =
     mongoose.model("Automation",
     automationSchema);
 
+    const Log =
+mongoose.model("Log", logSchema
+);
 
 // ======================================================
 // ================= REGISTER ===========================
@@ -452,6 +469,22 @@ io.on("connection", async (socket) => {
 
         }
 
+       await Log.create({
+
+    action:
+      `Turned ${device.status}`,
+
+    device: device.name,
+
+    room: device.room,
+
+    time:
+      new Date()
+      .toLocaleString(),
+
+    userId: socket.userId
+
+}); 
 
         const updatedDevices =
             await Device.find({
@@ -950,6 +983,19 @@ async (automationId) => {
         console.log("User disconnected");
 
     });
+  const logs =
+await Log.find({
+
+    userId: socket.userId
+
+})
+.sort({ _id: -1 })
+.limit(10);
+
+socket.emit(
+   "updateLogs",
+   logs
+);  
 
 });
 

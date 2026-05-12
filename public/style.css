@@ -961,3 +961,38 @@ a {
         grid-template-columns: 1fr;
     }
 }
+.activity-box {
+
+    margin-top: 30px;
+
+    padding: 30px;
+}
+
+.activity-item {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 15px 0;
+
+    border-bottom:
+      1px solid
+      rgba(255,255,255,0.08);
+}
+
+.activity-item p {
+
+    color: #a0a0a0;
+
+    margin-top: 5px;
+}
+
+.activity-item span {
+
+    color: #8f5dff;
+
+    font-size: 14px;
+}
